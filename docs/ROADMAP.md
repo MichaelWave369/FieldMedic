@@ -48,12 +48,16 @@
 
 Only after the prior rungs are qualified:
 
-- typed reversible actions
-- explicit authority grants
-- precondition checks
-- rollback contract
-- DriveMedic/NetMedic independent post-action verification
-- automatic denial when evidence or authority is insufficient
+- [x] typed reversible actions
+- [x] explicit authority grants
+- [x] precondition checks
+- [x] rollback contract
+- [x] DriveMedic/NetMedic independent post-action verification
+- [x] automatic denial when evidence or authority is insufficient
+
+### Qualification note
+
+The Rung 5 contract/transaction suite is CI-qualified with deterministic fake mutation backends. Live Windows mutation qualification for the built-in executors remains a Rung 6 release gate.
 
 ## Rung 6 — Field Supply release
 

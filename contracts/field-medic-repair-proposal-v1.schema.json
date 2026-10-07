@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fieldmedic.local/schema/field-medic-repair-proposal-v1.schema.json",
+  "title": "Field Medic Repair Proposal v1",
+  "type": "object",
+  "required": [
+    "schema", "proposal_id", "case_id", "action_key", "params",
+    "evidence_ids", "created_at", "reversible",
+    "requested_authority", "causal_claim"
+  ],
+  "properties": {
+    "schema": {"const": "field-medic-repair-proposal-v1"},
+    "proposal_id": {"type": "string"},
+    "case_id": {"type": "string"},
+    "action_key": {
+      "enum": ["windows.interface.metric", "windows.process.priority"]
+    },
+    "params": {"type": "object"},
+    "evidence_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string"}
+    },
+    "created_at": {"type": "string"},
+    "reversible": {"const": true},
+    "requested_authority": {"const": "execute"},
+    "causal_claim": {"const": false}
+  },
+  "additionalProperties": false
+}

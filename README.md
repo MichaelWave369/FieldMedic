@@ -1,4 +1,4 @@
-# Field Medic v0.5.0
+# Field Medic v0.6.0
 
 **Field Medic** is the orchestration layer above two independent diagnostic engines:
 
@@ -12,7 +12,7 @@ The engines are intentionally **not merged**. Field Medic speaks to each through
 
 > Measurement is not inference. Inference is not authority. A recommendation is not an executed action.
 
-Field Medic grants Agent Medic only these capabilities:
+Generic Agent Medic authority remains limited to:
 
 1. **OBSERVE** existing machine-readable evidence.
 2. **NORMALIZE** it without rewriting source payloads.
@@ -20,7 +20,7 @@ Field Medic grants Agent Medic only these capabilities:
 4. **ROUTE** a case toward host, network, mixed, or unknown specialists.
 5. **PROPOSE** a next bounded diagnostic step.
 
-It **cannot execute repairs**. Execution is fail-closed in this bootstrap.
+Generic **EXECUTE remains denied**. Rung 5 adds a separate Repair Gate that can admit only registered, reversible, hash-bound repair actions after explicit operator authorization and live preflight checks.
 
 ## Quick start
 
@@ -156,6 +156,48 @@ fieldmedic memory-stats
 Every match preserves its memory ID, record fingerprint, origin, outcome, evidence, lineage and score components. Memory similarity is not causation, verification, or action authority.
 
 See `docs/NBG_DIAGNOSTIC_MEMORY.md`.
+
+## Bounded repairs
+
+Rung 5 introduces a separate Repair Gate without giving Agent Medic a generic shell.
+
+Initial executable actions are deliberately tiny:
+
+- `windows.interface.metric`: set one Windows IPv4/IPv6 interface metric, preserving automatic/manual pre-state for rollback;
+- `windows.process.priority`: set one process to `BelowNormal` or `Normal`, pinned to PID + process start identity so PID reuse cannot redirect the action.
+
+Inspect the registry:
+
+~~~text
+fieldmedic repair-actions
+~~~
+
+A repair is a multi-step transaction:
+
+~~~text
+repair-propose
+  -> repair-prepare
+  -> repair-authorize
+  -> repair-execute
+  -> repair-verify
+  -> memory-verify
+~~~
+
+Example proposal:
+
+~~~powershell
+fieldmedic repair-propose CASE_ID --action windows.interface.metric --param interface_index=12 --param address_family=IPv4 --param metric=10
+~~~
+
+`repair-prepare` inspects the live target and freezes both the exact pre-state and exact rollback state. The operator grant binds the proposal SHA-256 and preflight SHA-256. Any state drift after preflight causes execution to be denied.
+
+Both DriveMedic and NetMedic must successfully capture the pre-action baseline before mutation. A typed postcondition must then pass and both engines must capture post-action evidence. If the postcondition fails or independent post-action capture fails, FieldMedic automatically rolls back to the exact authorized pre-state when that rollback remains safe.
+
+A successful mutation is **not** called a fix. It remains `EXECUTED_PENDING_OUTCOME_VERIFICATION`; later measurement remains `MEASURED_PENDING_OPERATOR_OUTCOME` until an explicit NBG outcome verification records success, failure, no effect, or contradiction.
+
+CI qualifies the governance/state-machine behavior with deterministic fake mutation backends. Live Windows mutation qualification remains a stable-release gate.
+
+See `docs/BOUNDED_REPAIRS.md`.
 
 ## Free and open source
 

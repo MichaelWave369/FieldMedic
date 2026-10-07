@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fieldmedic.local/schema/field-medic-repair-rollback-v1.schema.json",
+  "title": "Field Medic Repair Rollback v1",
+  "type": "object",
+  "required": [
+    "schema", "case_id", "proposal_id", "action_key",
+    "execution_evidence_id", "rollback",
+    "independent_verification_status", "independent_verification",
+    "status", "causal_claim", "generic_shell_used",
+    "rollback_evidence_id"
+  ],
+  "properties": {
+    "schema": {"const": "field-medic-repair-rollback-v1"},
+    "causal_claim": {"const": false},
+    "generic_shell_used": {"const": false}
+  },
+  "additionalProperties": true
+}
