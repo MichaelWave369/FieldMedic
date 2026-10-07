@@ -9,6 +9,7 @@ from .adapters.netmedic import NetMedicAdapter
 from .brainc import BrainCRouter, BrainCRoutingError
 from .correlation import correlate_evidence
 from .envelope import wrap_evidence
+from .experiments import suggest_experiment_template, save_json
 from .ledger import EvidenceLedger
 from .local_models import discover_local_models, choose_model
 from .local_reasoner import ollama_synthesis, LocalReasoningError
@@ -72,6 +73,7 @@ class AgentMedic:
         *,
         discover_models: bool = True,
         local_reasoning: bool = False,
+        netmedic_case: str | None = None,
     ) -> dict[str, Any]:
         self.gate.require(Authority.OBSERVE)
         case_id = case_id or self.new_case_id()
@@ -258,6 +260,30 @@ class AgentMedic:
         ledger.append(synthesis_evidence)
         evidence.append(synthesis_evidence)
 
+        experiment_proposal = suggest_experiment_template(
+            symptom=symptom,
+            case_id=case_id,
+            netmedic_case=netmedic_case,
+            evidence_ids=correlation.get("evidence_ids", []) + [
+                correlation_evidence.evidence_id,
+                synthesis_evidence.evidence_id,
+            ],
+        )
+        experiment_record = None
+        if experiment_proposal is not None:
+            proposal_path = (
+                case_dir
+                / "experiment-proposals"
+                / f"{experiment_proposal.proposal_id}.json"
+            )
+            save_json(proposal_path, experiment_proposal.to_dict())
+            experiment_record = {
+                "proposal": experiment_proposal.to_dict(),
+                "proposal_sha256": experiment_proposal.sha256,
+                "path": str(proposal_path),
+                "status": "PROPOSED_NOT_AUTHORIZED",
+            }
+
         proposal = self._next_step(
             case_id,
             decision.domain,
@@ -292,6 +318,7 @@ class AgentMedic:
             "evidence": [item.to_dict() for item in evidence],
             "correlation": correlation,
             "synthesis": synthesis,
+            "experiment_proposal": experiment_record,
             "errors": errors,
             "proposal": proposal.to_dict(),
             "authority": {

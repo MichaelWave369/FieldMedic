@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fieldmedic.local/schema/field-medic-experiment-proposal-v1.schema.json",
+  "title": "Field Medic Experiment Proposal v1",
+  "type": "object",
+  "required": [
+    "schema", "proposal_id", "case_id", "netmedic_case", "name", "design_key",
+    "arm_a", "arm_b", "test_label", "trials", "window_minutes", "controls",
+    "evidence_ids", "causal_claim", "requested_authority"
+  ],
+  "properties": {
+    "schema": {"const": "field-medic-experiment-proposal-v1"},
+    "proposal_id": {"type": "string"},
+    "case_id": {"type": "string"},
+    "netmedic_case": {"type": "string"},
+    "name": {"type": "string"},
+    "design_key": {"type": "string"},
+    "arm_a": {"type": "string"},
+    "arm_b": {"type": "string"},
+    "test_label": {"type": "string"},
+    "trials": {"type": "integer", "minimum": 1},
+    "window_minutes": {"type": "integer", "minimum": 1},
+    "controls": {"type": "array"},
+    "evidence_ids": {"type": "array", "items": {"type": "string"}},
+    "causal_claim": {"const": false},
+    "requested_authority": {"const": "propose"}
+  },
+  "additionalProperties": false
+}

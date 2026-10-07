@@ -31,10 +31,10 @@
 
 ## Rung 3 — Governed experiments
 
-- Agent Medic may *propose* NetMedic frozen protocols
-- operator approves protocol creation/execution
-- protocol receipts linked into the Field Medic case
-- DriveMedic host-state controls can be captured beside network arms
+- [x] Agent Medic may *propose* NetMedic frozen protocols
+- [x] operator approves protocol creation/execution
+- [x] protocol receipts linked into the Field Medic case
+- [x] DriveMedic host-state controls can be captured beside network arms
 
 ## Rung 4 — NBG diagnostic memory
 

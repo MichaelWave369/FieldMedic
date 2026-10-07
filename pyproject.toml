@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fieldmedic"
-version = "0.3.0"
+version = "0.4.0"
 description = "Governed orchestration contract for DriveMedic, NetMedic, and Agent Medic"
 requires-python = ">=3.11"
 license = "MIT"
