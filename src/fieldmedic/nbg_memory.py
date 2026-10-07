@@ -24,6 +24,12 @@ VERIFIED_OUTCOMES = {
     "VERIFIED_CONTRADICTION",
 }
 VALID_OUTCOMES = VERIFIED_OUTCOMES | {"UNRESOLVED"}
+QUALIFYING_OBSERVED = {"OBSERVATION", "MEASUREMENT", "AUTHORITATIVE_TOOL"}
+QUALIFYING_VERIFIED = {
+    "VERIFICATION",
+    "EXTERNAL_VERIFICATION",
+    "INDEPENDENT_VERIFICATION",
+}
 
 
 class MemoryErrorBase(RuntimeError):
@@ -422,6 +428,35 @@ def compare_case_to_memory(
     )
 
 
+def validate_nbg_memory(memory: dict[str, Any]) -> None:
+    if memory.get("schemaVersion") != "NBG_EPISTEMIC_1":
+        raise MemoryAdmissionError("memory is not NBG_EPISTEMIC_1")
+    epistemic = memory.get("epistemic")
+    if not isinstance(epistemic, dict):
+        raise MemoryAdmissionError("memory epistemic envelope is missing")
+    origin = epistemic.get("origin")
+    if origin not in ORIGIN_WEIGHT:
+        raise MemoryAdmissionError(f"unsupported epistemic origin: {origin}")
+    authority = epistemic.get("authority", {})
+    if authority.get("actionAuthorized"):
+        raise MemoryAdmissionError("diagnostic memory may not authorize action")
+    if not authority.get("retainable", False):
+        raise MemoryAdmissionError("memory is not marked retainable")
+    evidence = epistemic.get("evidence", [])
+    kinds = {item.get("kind") for item in evidence if isinstance(item, dict)}
+    if origin == "OBSERVED" and not (kinds & QUALIFYING_OBSERVED):
+        raise MemoryAdmissionError(
+            "OBSERVED memory requires qualifying observation evidence"
+        )
+    if origin == "VERIFIED" and not (kinds & QUALIFYING_VERIFIED):
+        raise MemoryAdmissionError(
+            "VERIFIED memory requires qualifying verification evidence"
+        )
+    body = {key: value for key, value in memory.items() if key != "recordFingerprint"}
+    if memory.get("recordFingerprint") != nbg_fingerprint(body):
+        raise MemoryAdmissionError("memory fingerprint validation failed")
+
+
 class DiagnosticMemoryStore:
     def __init__(self, root: Path):
         self.root = root
@@ -465,13 +500,7 @@ class DiagnosticMemoryStore:
         reason: str,
         case_id: str,
     ) -> dict[str, Any]:
-        if memory.get("schemaVersion") != "NBG_EPISTEMIC_1":
-            raise MemoryAdmissionError("memory is not NBG_EPISTEMIC_1")
-        if memory.get("epistemic", {}).get("authority", {}).get("actionAuthorized"):
-            raise MemoryAdmissionError("diagnostic memory may not authorize action")
-        body = {k: v for k, v in memory.items() if k != "recordFingerprint"}
-        if memory.get("recordFingerprint") != nbg_fingerprint(body):
-            raise MemoryAdmissionError("memory fingerprint validation failed")
+        validate_nbg_memory(memory)
 
         prior = self._record_by_id(memory["memoryId"])
         if prior:
