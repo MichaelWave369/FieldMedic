@@ -13,12 +13,12 @@
 
 ## Rung 1 — Native case correlation
 
-- timestamp normalization across both engines
-- DriveMedic timeline ingestion
-- evidence-reference graph
-- cross-source event windows
-- contradiction detection
-- confidence calibration without causal inflation
+- [x] timestamp normalization across both engines
+- [x] DriveMedic timeline ingestion
+- [x] evidence-reference graph
+- [x] cross-source event windows
+- [x] contradiction detection
+- [x] bounded association scoring without causal inflation
 
 ## Rung 2 — Agent Medic specialist protocol
 
