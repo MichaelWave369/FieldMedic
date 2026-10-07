@@ -1,4 +1,4 @@
-# Field Medic v0.7.0-rc2
+# Field Medic v0.7.0-rc3
 
 **Field Medic** is the orchestration layer above two independent diagnostic engines:
 
@@ -260,6 +260,41 @@ A successful run writes a hash-bound receipt under `FIELDMEDIC_HOME/qualificatio
 A PASS qualifies this bounded apply/measure/rollback path on the recorded machine/environment. It does not claim every Windows machine, driver, interface, or workload is qualified.
 
 See `docs/WINDOWS_REPAIR_QUALIFICATION.md`.
+
+## RC3 Windows install / uninstall handoff
+
+RC3 adds a per-user Windows distribution path without bundling or relicensing DriveMedic or NetMedic.
+
+The release bundle contains only:
+
+- the FieldMedic wheel;
+- `install.ps1`;
+- `uninstall.ps1`;
+- the install guide;
+- the MIT license;
+- a SHA-256 manifest.
+
+The installer verifies every bundled file against that manifest before creating a runtime. It installs FieldMedic into a versioned virtual environment under `%LOCALAPPDATA%\Programs\FieldMedic`, while diagnostic data lives separately under `%LOCALAPPDATA%\FieldMedic`.
+
+Existing engine paths can be handed off without modifying either engine:
+
+~~~powershell
+.\install.ps1 -DriveMedic "C:\Path\drivemedic.exe" -NetMedic "C:\Path\netmedic.exe" -AddToPath
+~~~
+
+The handoff config is itself hash-bound. Explicit CLI paths and environment variables still override it.
+
+Default uninstall removes the program but preserves cases, NBG memory, evidence, configuration and qualification receipts:
+
+~~~powershell
+%LOCALAPPDATA%\Programs\FieldMedic\uninstall.ps1
+~~~
+
+Deleting data requires both `-RemoveData` and `-ConfirmDataRemoval`.
+
+A successful install creates a current-version install receipt. `fieldmedic release-receipt` admits the Windows install gate only from a valid local receipt; merely having installer scripts in the repository is not treated as proof that this machine was installed through them.
+
+See `docs/WINDOWS_INSTALL.txt`.
 
 ## Free and open source
 
