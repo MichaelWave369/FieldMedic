@@ -216,6 +216,12 @@ class ExperimentGate:
             raise ExperimentApprovalError("experiment approval has expired")
 
         if require_physical_confirmations:
+            try:
+                issued = _parse_utc(str(approval["issued_at"]))
+            except Exception as exc:
+                raise ExperimentApprovalError("approval issue time is invalid") from exc
+            if (instant - issued).total_seconds() > 600:
+                raise ExperimentApprovalError("physical confirmations are stale; reconfirm before capture")
             confirm = approval.get("confirmations", {})
             missing = [
                 key for key in ("arm", "machine_stable", "test_context")
