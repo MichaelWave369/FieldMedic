@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fieldmedic.local/schema/field-medic-repair-execution-v1.schema.json",
+  "title": "Field Medic Repair Execution v1",
+  "type": "object",
+  "required": [
+    "schema", "case_id", "proposal", "proposal_sha256",
+    "preflight", "grant", "action_key", "params",
+    "state_before", "state_before_sha256", "expected_applied_state",
+    "expected_applied_state_sha256", "state_after_apply",
+    "state_after_apply_sha256", "baseline_verification",
+    "postaction_verification", "rollback", "status", "error",
+    "outcome_claim", "causal_claim", "generic_shell_used",
+    "execution_evidence_id"
+  ],
+  "properties": {
+    "schema": {"const": "field-medic-repair-execution-v1"},
+    "outcome_claim": {"const": "UNCLASSIFIED"},
+    "causal_claim": {"const": false},
+    "generic_shell_used": {"const": false}
+  },
+  "additionalProperties": true
+}
