@@ -151,6 +151,44 @@ class NBGMemoryTests(unittest.TestCase):
             ))
             self.assertEqual(memory_reliability(derived), 1.0)
 
+    def test_inferred_and_verified_same_lineage_count_once_for_routing(self):
+        with tempfile.TemporaryDirectory() as td:
+            store = DiagnosticMemoryStore(Path(td))
+            source = case_to_inferred_memory(sample_case())
+            store.admit(
+                source,
+                operator_label="operator",
+                reason="source",
+                case_id="case-1",
+            )
+            derived, receipt = derive_verified_outcome(
+                source,
+                outcome="VERIFIED_SUCCESS",
+                verification_evidence_id="verify-success",
+            )
+            store.admit(
+                derived,
+                operator_label="operator",
+                reason="verified",
+                case_id="case-1",
+            )
+            store.append_transition(receipt)
+            hints = store.routing_hints(
+                symptom="wifi disconnects while Windows freezes",
+                domain="mixed",
+                specialist_ids=["network.wifi"],
+            )
+            self.assertEqual(hints["routingLineageCount"], 1)
+            wifi = next(
+                item for item in hints["specialistHints"]
+                if item["specialistId"] == "network.wifi"
+            )
+            self.assertEqual(
+                wifi["supportingMemoryIds"],
+                [source["memoryId"]],
+            )
+            self.assertLessEqual(wifi["score"], 1.0)
+
     def test_routing_hints_are_model_independent_and_provenance_preserving(self):
         with tempfile.TemporaryDirectory() as td:
             store = DiagnosticMemoryStore(Path(td))
