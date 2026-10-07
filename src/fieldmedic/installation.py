@@ -33,6 +33,7 @@ def build_install_receipt(
     wheel: Path,
     launcher: Path,
     dashboard_launcher: Path,
+    uninstaller: Path,
     path_added: bool,
 ) -> dict[str, Any]:
     required = {
@@ -40,6 +41,7 @@ def build_install_receipt(
         "wheel": wheel,
         "launcher": launcher,
         "dashboard_launcher": dashboard_launcher,
+        "uninstaller": uninstaller,
     }
     missing = [
         name for name, path in required.items()
@@ -69,6 +71,7 @@ def build_install_receipt(
             "fieldmedic": str(launcher.resolve()),
             "dashboard": str(dashboard_launcher.resolve()),
         },
+        "uninstaller": str(uninstaller.resolve()),
         "path_added": bool(path_added),
         "engine_config": load_engine_config(home),
         "engine_discovery": discover_engines(home=home),
@@ -102,6 +105,7 @@ def validate_install_receipt(
         ("runtime_root", receipt.get("runtime_root")),
         ("fieldmedic launcher", receipt.get("launchers", {}).get("fieldmedic")),
         ("dashboard launcher", receipt.get("launchers", {}).get("dashboard")),
+        ("uninstaller", receipt.get("uninstaller")),
     ):
         if not raw:
             errors.append(f"{name} missing from install receipt")
