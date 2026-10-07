@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fieldmedic.local/schema/field-medic-repair-preflight-v1.schema.json",
+  "title": "Field Medic Repair Preflight v1",
+  "type": "object",
+  "required": [
+    "schema", "preflight_id", "proposal_id", "proposal_sha256",
+    "case_id", "action_key", "state_before", "state_before_sha256",
+    "expected_applied_state", "expected_applied_state_sha256",
+    "rollback_state", "prepared_at", "expires_at",
+    "rollback_required", "generic_shell_authorized", "preflight_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "field-medic-repair-preflight-v1"},
+    "preflight_id": {"type": "string"},
+    "proposal_id": {"type": "string"},
+    "proposal_sha256": {"type": "string"},
+    "case_id": {"type": "string"},
+    "action_key": {"type": "string"},
+    "state_before": {"type": "object"},
+    "state_before_sha256": {"type": "string"},
+    "expected_applied_state": {"type": "object"},
+    "expected_applied_state_sha256": {"type": "string"},
+    "rollback_state": {"type": "object"},
+    "prepared_at": {"type": "string"},
+    "expires_at": {"type": "string"},
+    "rollback_required": {"const": true},
+    "generic_shell_authorized": {"const": false},
+    "preflight_sha256": {"type": "string"}
+  },
+  "additionalProperties": false
+}
