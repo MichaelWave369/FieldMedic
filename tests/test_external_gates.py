@@ -78,7 +78,7 @@ class ExternalGateTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             license_file = root / "LICENSE"
-            license_file.write_text("placeholder", encoding="utf-8")
+            license_file.write_text("All rights reserved.", encoding="utf-8")
             with patch(
                 "fieldmedic.external_gates.discover_engines",
                 return_value=DISCOVERY,
@@ -90,9 +90,38 @@ class ExternalGateTests(unittest.TestCase):
                         source_receipt=license_file,
                         operator_label="operator",
                         declared_pass=True,
-                        license_id="Proprietary",
+                        license_id="MIT",
                         redistribution_allowed=True,
                     )
+
+    def test_matching_mit_license_artifact_is_accepted(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            license_file = root / "LICENSE"
+            license_file.write_text(
+                "MIT License\nPermission is hereby granted, free of charge, to any person.",
+                encoding="utf-8",
+            )
+            with patch(
+                "fieldmedic.external_gates.discover_engines",
+                return_value=DISCOVERY,
+            ):
+                record = import_external_gate(
+                    home=root / "home",
+                    kind="netmedic-license",
+                    source_receipt=license_file,
+                    operator_label="operator",
+                    declared_pass=True,
+                    license_id="MIT",
+                    redistribution_allowed=True,
+                )
+            valid, errors = validate_external_gate(
+                record,
+                kind="netmedic-license",
+                expected_engine_version="Parallax NetMedic v0.34.0",
+            )
+            self.assertTrue(valid)
+            self.assertEqual(errors, [])
 
     def test_external_artifact_tamper_invalidates_gate(self):
         with tempfile.TemporaryDirectory() as td:
