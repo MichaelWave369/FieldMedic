@@ -16,10 +16,6 @@ def default_home() -> Path:
     env = os.environ.get("FIELDMEDIC_HOME")
     if env:
         return Path(env).expanduser()
-    if os.name == "nt":
-        local = os.environ.get("LOCALAPPDATA")
-        if local:
-            return Path(local) / "FieldMedic"
     return Path.home() / ".fieldmedic"
 
 
