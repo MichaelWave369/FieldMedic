@@ -9,9 +9,15 @@ from fieldmedic.nbg_memory import (
     fnv1a32,
     memory_reliability,
     merge_specialist_hints,
+    nbg_fingerprint,
     stable_json,
     verified_outcome_weight,
 )
+
+
+def json_clone(value):
+    import json
+    return json.loads(json.dumps(value))
 
 
 def sample_case(case_id="case-1", symptom="wifi disconnects while Windows freezes"):
@@ -117,6 +123,22 @@ class NBGMemoryTests(unittest.TestCase):
             verified_outcome_weight("VERIFIED_FAILURE"),
             verified_outcome_weight("VERIFIED_SUCCESS"),
         )
+
+    def test_fake_verified_label_without_verification_evidence_is_rejected(self):
+        from fieldmedic.nbg_memory import MemoryAdmissionError
+        memory = case_to_inferred_memory(sample_case())
+        forged = json_clone(memory)
+        forged["epistemic"]["origin"] = "VERIFIED"
+        body = {k: v for k, v in forged.items() if k != "recordFingerprint"}
+        forged["recordFingerprint"] = nbg_fingerprint(body)
+        with tempfile.TemporaryDirectory() as td:
+            with self.assertRaises(MemoryAdmissionError):
+                DiagnosticMemoryStore(Path(td)).admit(
+                    forged,
+                    operator_label="operator",
+                    reason="forged",
+                    case_id="case-1",
+                )
 
     def test_negative_verified_case_is_retained_and_queryable(self):
         with tempfile.TemporaryDirectory() as td:
