@@ -63,7 +63,7 @@ class ExperimentTests(unittest.TestCase):
         approval = create_approval(
             self.proposal,
             operator_label="operator",
-            scopes=["netmedic.protocol.capture"],
+            scopes=["netmedic.protocol.preflight", "netmedic.protocol.capture"],
             confirmations={"arm": True, "machine_stable": True, "test_context": True, "controls": ["vpn"]},
         )
         with self.assertRaises(ExperimentApprovalError):
@@ -78,7 +78,7 @@ class ExperimentTests(unittest.TestCase):
         approval = create_approval(
             self.proposal,
             operator_label="operator",
-            scopes=["netmedic.protocol.capture"],
+            scopes=["netmedic.protocol.preflight", "netmedic.protocol.capture"],
             confirmations={
                 "arm": True,
                 "machine_stable": True,
@@ -92,6 +92,29 @@ class ExperimentTests(unittest.TestCase):
             scope="netmedic.protocol.capture",
             require_physical_confirmations=True,
         )
+
+    def test_stale_physical_confirmations_are_rejected(self):
+        approval = create_approval(
+            self.proposal,
+            operator_label="operator",
+            scopes=["netmedic.protocol.preflight", "netmedic.protocol.capture"],
+            ttl_minutes=30,
+            confirmations={
+                "arm": True,
+                "machine_stable": True,
+                "test_context": True,
+                "controls": ["vpn", "location"],
+            },
+        )
+        later = datetime.now(timezone.utc) + timedelta(minutes=11)
+        with self.assertRaises(ExperimentApprovalError):
+            ExperimentGate().require(
+                proposal=self.proposal,
+                approval=approval,
+                scope="netmedic.protocol.capture",
+                now=later,
+                require_physical_confirmations=True,
+            )
 
     def test_expired_approval_is_rejected(self):
         approval = create_approval(
