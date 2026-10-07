@@ -22,12 +22,12 @@
 
 ## Rung 2 — Agent Medic specialist protocol
 
-- specialist capability descriptors
-- BrainC routing adapter
-- local-first model discovery
-- cheap-model default path
-- sparse escalation conditions
-- synthesis receipt that cites evidence IDs
+- [x] specialist capability descriptors
+- [x] BrainC routing adapter
+- [x] local-first model discovery
+- [x] cheap-model default path
+- [x] sparse escalation conditions
+- [x] synthesis receipt that cites evidence IDs
 
 ## Rung 3 — Governed experiments
 

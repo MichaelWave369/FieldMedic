@@ -6,39 +6,73 @@ from typing import Any
 
 from .adapters.drivemedic import DriveMedicAdapter
 from .adapters.netmedic import NetMedicAdapter
+from .brainc import BrainCRouter, BrainCRoutingError
 from .correlation import correlate_evidence
 from .envelope import wrap_evidence
 from .ledger import EvidenceLedger
+from .local_models import discover_local_models, choose_model
+from .local_reasoner import ollama_synthesis, LocalReasoningError
 from .models import Source, ClaimClass, ActionProposal, Authority, utc_now
 from .policy import RealityGate
 from .router import route
 from .memory import nbg_projection
+from .reasoning import plan_reasoning
+from .specialists import plan_specialists, materialize_specialist_plan
+from .synthesis import build_synthesis
 
 
 class AgentMedic:
-    def __init__(self, home: Path):
+    def __init__(self, home: Path, brainc_binary: str | None = None):
         self.home = home
         self.gate = RealityGate()
+        self.brainc = BrainCRouter(brainc_binary)
 
     def new_case_id(self) -> str:
         return f"case-{uuid.uuid4().hex[:12]}"
 
-    def health(self, drivemedic: str | None, netmedic: str | None) -> dict[str, Any]:
-        out: dict[str, Any] = {"fieldmedic": "ok", "engines": {}}
+    def health(
+        self,
+        drivemedic: str | None,
+        netmedic: str | None,
+        *,
+        discover_models: bool = True,
+    ) -> dict[str, Any]:
+        out: dict[str, Any] = {
+            "fieldmedic": "ok",
+            "engines": {},
+            "brainc": {"configured": self.brainc.available},
+        }
         if drivemedic:
             try:
-                out["engines"]["drivemedic"] = {"ok": True, "self_check": DriveMedicAdapter(drivemedic).self_check()}
+                out["engines"]["drivemedic"] = {
+                    "ok": True,
+                    "self_check": DriveMedicAdapter(drivemedic).self_check(),
+                }
             except Exception as exc:
                 out["engines"]["drivemedic"] = {"ok": False, "error": str(exc)}
         if netmedic:
             try:
-                out["engines"]["netmedic"] = {"ok": True, "crypto_status": NetMedicAdapter(netmedic).crypto_status_text()}
+                out["engines"]["netmedic"] = {
+                    "ok": True,
+                    "crypto_status": NetMedicAdapter(netmedic).crypto_status_text(),
+                }
             except Exception as exc:
                 out["engines"]["netmedic"] = {"ok": False, "error": str(exc)}
+        if discover_models:
+            models = discover_local_models()
+            out["local_models"] = [model.to_dict() for model in models]
         return out
 
-    def doctor(self, symptom: str, drivemedic: str | None, netmedic: str | None,
-               case_id: str | None = None) -> dict[str, Any]:
+    def doctor(
+        self,
+        symptom: str,
+        drivemedic: str | None,
+        netmedic: str | None,
+        case_id: str | None = None,
+        *,
+        discover_models: bool = True,
+        local_reasoning: bool = False,
+    ) -> dict[str, Any]:
         self.gate.require(Authority.OBSERVE)
         case_id = case_id or self.new_case_id()
         decision = route(symptom)
@@ -92,7 +126,9 @@ class AgentMedic:
                     category="network.snapshot",
                     summary="NetMedic privacy-safe network snapshot",
                     payload=raw,
-                    provenance={"adapter": "--report + --redact-report + --omit-raw-evidence"},
+                    provenance={
+                        "adapter": "--report + --redact-report + --omit-raw-evidence"
+                    },
                 )
                 ledger.append(ev)
                 evidence.append(ev)
@@ -115,6 +151,112 @@ class AgentMedic:
         )
         ledger.append(correlation_evidence)
         evidence.append(correlation_evidence)
+
+        specialist_plan = plan_specialists(symptom, decision.domain, correlation)
+        local_models = discover_local_models() if discover_models else []
+        reasoning_plan = plan_reasoning(
+            domain=decision.domain,
+            correlation=correlation,
+            specialist_plan=specialist_plan,
+            local_models=local_models,
+        )
+
+        brainc_result = None
+        if self.brainc.available and correlation.get("source_count", 0) > 0:
+            request = {
+                "schema": "field-medic-brainc-routing-request-v1",
+                "case_id": case_id,
+                "symptom": symptom,
+                "domain": decision.domain,
+                "deterministic_specialist_ids": specialist_plan["specialist_ids"],
+                "correlation": {
+                    "source_count": correlation.get("source_count", 0),
+                    "cross_source_pair_count": len(correlation.get("cross_source_pairs", [])),
+                    "contradiction_count": len(correlation.get("contradictions", [])),
+                    "diagnostic_tension_count": len(correlation.get("diagnostic_tensions", [])),
+                    "causal_claim": False,
+                },
+                "local_models": [model.to_dict() for model in local_models],
+                "constraints": {
+                    "allowed_reasoning_tiers": ["deterministic", "utility", "specialist"],
+                    "frontier_allowed": False,
+                    "authority_ceiling": "infer",
+                },
+            }
+            try:
+                brainc_result = self.brainc.route(request, frontier_allowed=False)
+                specialist_plan = materialize_specialist_plan(
+                    brainc_result["specialist_ids"],
+                    reasons=brainc_result["reasons"],
+                    source="brainc",
+                )
+                requested_tier = brainc_result["reasoning_tier"]
+                selected = choose_model(local_models, requested_tier)
+                reasoning_plan = {
+                    **reasoning_plan,
+                    "requested_tier": requested_tier,
+                    "selected_local_model": selected.to_dict() if selected else None,
+                    "specialist_ids": specialist_plan["specialist_ids"],
+                    "routing_source": "brainc",
+                    "brainc_escalate": brainc_result["escalate"],
+                }
+            except BrainCRoutingError as exc:
+                errors.append({"source": "brainc", "error": str(exc)})
+
+        synthesis = build_synthesis(
+            case_id=case_id,
+            symptom=symptom,
+            domain=decision.domain,
+            correlation=correlation,
+            correlation_evidence_id=correlation_evidence.evidence_id,
+            specialist_plan=specialist_plan,
+            reasoning_plan=reasoning_plan,
+        )
+
+        local_reasoning_status = {
+            "requested": bool(local_reasoning),
+            "invoked": False,
+            "model": None,
+            "fallback": None,
+        }
+        selected_model = reasoning_plan.get("selected_local_model")
+        if local_reasoning and selected_model:
+            local_reasoning_status["model"] = selected_model["name"]
+            available_ids = set(correlation.get("evidence_ids", []))
+            available_ids.add(correlation_evidence.evidence_id)
+            try:
+                synthesis = ollama_synthesis(
+                    model=selected_model["name"],
+                    base_receipt=synthesis,
+                    available_evidence_ids=available_ids,
+                )
+                local_reasoning_status["invoked"] = True
+            except LocalReasoningError as exc:
+                local_reasoning_status["fallback"] = "deterministic-synthesis"
+                errors.append({"source": "local_reasoner", "error": str(exc)})
+        elif local_reasoning:
+            local_reasoning_status["fallback"] = "no-eligible-local-model"
+
+        synthesis_evidence = wrap_evidence(
+            case_id=case_id,
+            source=Source.AGENT_MEDIC,
+            category="case.synthesis",
+            summary=synthesis["summary"],
+            payload=synthesis,
+            claim_class=ClaimClass.INFERENCE,
+            provenance={
+                "engine": (
+                    "ollama-local-synthesis-v1"
+                    if local_reasoning_status["invoked"]
+                    else "deterministic-synthesis-v1"
+                ),
+                "input_evidence_ids": correlation.get("evidence_ids", [])
+                + [correlation_evidence.evidence_id],
+                "specialist_ids": specialist_plan["specialist_ids"],
+            },
+        )
+        ledger.append(synthesis_evidence)
+        evidence.append(synthesis_evidence)
 
         proposal = self._next_step(
             case_id,
@@ -139,8 +281,17 @@ class AgentMedic:
             "case_id": case_id,
             "symptom": symptom,
             "routing": route_dict,
+            "specialist_plan": specialist_plan,
+            "reasoning_plan": reasoning_plan,
+            "brainc": {
+                "configured": self.brainc.available,
+                "result": brainc_result,
+            },
+            "local_models": [model.to_dict() for model in local_models],
+            "local_reasoning": local_reasoning_status,
             "evidence": [item.to_dict() for item in evidence],
             "correlation": correlation,
+            "synthesis": synthesis,
             "errors": errors,
             "proposal": proposal.to_dict(),
             "authority": {
