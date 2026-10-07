@@ -1,0 +1,36 @@
+FieldMedic Windows Install
+==========================
+
+This bundle installs FieldMedic only. It does not bundle DriveMedic or NetMedic.
+
+Requirements:
+- Windows 10/11
+- Python 3.11 or newer
+
+Install from PowerShell:
+
+  .\install.ps1
+
+Optional existing engine handoff:
+
+  .\install.ps1 -DriveMedic "C:\Path\drivemedic.exe" -NetMedic "C:\Path\netmedic.exe"
+
+Optional user PATH integration:
+
+  .\install.ps1 -AddToPath
+
+Default locations:
+
+  Program: %LOCALAPPDATA%\Programs\FieldMedic
+  Data:    %LOCALAPPDATA%\FieldMedic
+
+Default uninstall preserves cases, memory, receipts, configuration, and qualification evidence:
+
+  %LOCALAPPDATA%\Programs\FieldMedic\uninstall.ps1
+
+To remove local data too, both destructive flags are required:
+
+  uninstall.ps1 -RemoveData -ConfirmDataRemoval
+
+The installer never installs, updates, modifies, or relicenses DriveMedic or NetMedic.
+Engine configuration is a local path handoff only.
