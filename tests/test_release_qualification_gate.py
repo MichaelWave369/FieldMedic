@@ -76,6 +76,7 @@ def receipt():
             key: {
                 "status": "PASS",
                 "rollback_exact": True,
+                "rollback_verification_status": "CAPTURED",
                 "verification_status": "MEASURED_PENDING_OPERATOR_OUTCOME",
                 "execution_evidence_id": f"ev-exec-{key}",
                 "verification_evidence_id": f"ev-verify-{key}",
