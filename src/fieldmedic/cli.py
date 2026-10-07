@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 
+from .envelope import wrap_evidence
 from .experiment_runner import GovernedExperimentRunner
 from .experiments import (
     create_approval,
@@ -12,7 +13,15 @@ from .experiments import (
     propose_experiment,
     save_json,
 )
+from .ledger import EvidenceLedger
 from .local_models import discover_local_models
+from .models import ClaimClass, Source
+from .nbg_memory import (
+    DiagnosticMemoryStore,
+    VERIFIED_OUTCOMES,
+    case_to_inferred_memory,
+    derive_verified_outcome,
+)
 from .orchestrator import AgentMedic
 from .router import route
 from .specialists import list_specialists
@@ -22,6 +31,24 @@ def _home() -> Path:
     return Path(
         os.environ.get("FIELDMEDIC_HOME", str(Path.home() / ".fieldmedic"))
     ).expanduser()
+
+
+def _memory_store() -> DiagnosticMemoryStore:
+    return DiagnosticMemoryStore(_home() / "memory" / "nbg")
+
+
+def _case_dir(case_id: str) -> Path:
+    return _home() / "cases" / case_id
+
+
+def _load_case(case_id: str) -> dict:
+    path = _case_dir(case_id) / "case.json"
+    if not path.exists():
+        raise SystemExit(f"FieldMedic case not found: {path}")
+    value = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(value, dict):
+        raise SystemExit(f"FieldMedic case root must be an object: {path}")
+    return value
 
 
 def _controls(values: list[str] | None) -> dict[str, str]:
@@ -115,6 +142,26 @@ def main(argv=None) -> int:
     em.add_argument("--protocol", required=True)
     em.add_argument("--netmedic", default=os.environ.get("NETMEDIC_BIN"), required=False)
 
+    ma = sub.add_parser("memory-admit", help="admit a case candidate into durable NBG memory")
+    ma.add_argument("case_id")
+    ma.add_argument("--operator", required=True)
+    ma.add_argument("--reason", default="retain diagnostic case")
+
+    mv = sub.add_parser("memory-verify", help="derive a verified outcome from an admitted case memory")
+    mv.add_argument("case_id")
+    mv.add_argument("--operator", required=True)
+    mv.add_argument("--outcome", required=True, choices=sorted(VERIFIED_OUTCOMES))
+    mv.add_argument("--details")
+    mv.add_argument("--memory-id")
+
+    mq = sub.add_parser("memory-query", help="query diagnostic memory without a model")
+    mq.add_argument("symptom")
+    mq.add_argument("--domain", default="unknown")
+    mq.add_argument("--specialist", action="append", default=[])
+    mq.add_argument("--limit", type=int, default=5)
+
+    sub.add_parser("memory-stats", help="summarize the local NBG diagnostic store")
+
     args = p.parse_args(argv)
     agent = AgentMedic(_home(), brainc_binary=args.brainc)
 
@@ -140,6 +187,85 @@ def main(argv=None) -> int:
             local_reasoning=args.local_reasoning,
             netmedic_case=args.netmedic_case,
         )
+    elif args.cmd == "memory-admit":
+        case = _load_case(args.case_id)
+        candidate_path = _case_dir(args.case_id) / "nbg-candidate.json"
+        if candidate_path.exists():
+            candidate_doc = json.loads(candidate_path.read_text(encoding="utf-8"))
+            memory = candidate_doc.get("memory") if isinstance(candidate_doc, dict) else None
+        else:
+            memory = None
+        if not isinstance(memory, dict):
+            memory = case_to_inferred_memory(case)
+        admission = _memory_store().admit(
+            memory,
+            operator_label=args.operator,
+            reason=args.reason,
+            case_id=args.case_id,
+        )
+        result = {
+            "memory": memory,
+            "admission": admission,
+            "store": str(_memory_store().root),
+        }
+    elif args.cmd == "memory-verify":
+        store = _memory_store()
+        memory_id = args.memory_id or f"fieldmedic:{args.case_id}:inferred"
+        source_memory = store.get(memory_id)
+        if source_memory is None:
+            raise SystemExit(
+                f"source memory is not admitted: {memory_id}; run memory-admit first"
+            )
+        verification = wrap_evidence(
+            case_id=args.case_id,
+            source=Source.OPERATOR,
+            category="memory.outcome-verification",
+            summary=f"Operator verified diagnostic outcome: {args.outcome}",
+            payload={
+                "outcome": args.outcome,
+                "details": args.details,
+                "operator_label": args.operator,
+                "operator_label_semantics": (
+                    "local operator label; not independently verified identity"
+                ),
+            },
+            claim_class=ClaimClass.VERIFICATION,
+            provenance={
+                "method": "explicit-operator-verification",
+                "source_memory_id": memory_id,
+            },
+        )
+        EvidenceLedger(_case_dir(args.case_id) / "evidence.jsonl").append(verification)
+        derived, transition = derive_verified_outcome(
+            source_memory,
+            outcome=args.outcome,
+            verification_evidence_id=verification.evidence_id,
+            details=args.details,
+            source="fieldmedic-explicit-operator-verification",
+            known_time=verification.ingested_at,
+        )
+        admission = store.admit(
+            derived,
+            operator_label=args.operator,
+            reason=f"retain verified diagnostic outcome {args.outcome}",
+            case_id=args.case_id,
+        )
+        store.append_transition(transition)
+        result = {
+            "verification_evidence": verification.to_dict(),
+            "derived_memory": derived,
+            "transition": transition,
+            "admission": admission,
+        }
+    elif args.cmd == "memory-query":
+        result = _memory_store().routing_hints(
+            symptom=args.symptom,
+            domain=args.domain,
+            specialist_ids=args.specialist,
+            limit=args.limit,
+        )
+    elif args.cmd == "memory-stats":
+        result = _memory_store().stats()
     elif args.cmd == "experiment-propose":
         proposal = propose_experiment(
             case_id=args.case_id,
