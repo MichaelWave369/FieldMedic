@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fieldmedic.local/schema/field-medic-experiment-capture-v1.schema.json",
+  "title": "Field Medic Experiment Capture v1",
+  "type": "object",
+  "required": [
+    "schema", "proposal_id", "proposal_sha256", "approval_id",
+    "protocol_fingerprint", "host_before", "host_after",
+    "netmedic_preflight", "netmedic_execution",
+    "host_before_sha256", "host_after_sha256",
+    "causal_claim", "repair_authority", "evidence_id"
+  ],
+  "properties": {
+    "schema": {"const": "field-medic-experiment-capture-v1"},
+    "proposal_id": {"type": "string"},
+    "proposal_sha256": {"type": "string"},
+    "approval_id": {"type": "string"},
+    "protocol_fingerprint": {"type": "string"},
+    "host_before": {},
+    "host_after": {},
+    "netmedic_preflight": {"type": "object"},
+    "netmedic_execution": {"type": "object"},
+    "host_before_sha256": {"type": ["string", "null"]},
+    "host_after_sha256": {"type": ["string", "null"]},
+    "causal_claim": {"const": false},
+    "repair_authority": {"const": false},
+    "evidence_id": {"type": "string"}
+  },
+  "additionalProperties": false
+}
