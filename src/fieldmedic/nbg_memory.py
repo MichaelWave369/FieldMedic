@@ -559,14 +559,29 @@ class DiagnosticMemoryStore:
         )
         scores: dict[str, float] = {}
         support: dict[str, list[str]] = {}
+        # One routing vote per root lineage. An INFERRED source and its VERIFIED
+        # descendant are history, not two independent cases.
+        by_root: dict[str, SimilarityResult] = {}
         for match in matches:
+            root = (
+                match.memory.get("epistemic", {})
+                .get("lineage", {})
+                .get("rootMemoryId")
+                or match.memory["memoryId"]
+            )
+            prior = by_root.get(root)
+            if prior is None or (match.score, match.reliability) > (
+                prior.score,
+                prior.reliability,
+            ):
+                by_root[root] = match
+
+        for root, match in by_root.items():
             for specialist in match.memory.get("content", {}).get(
                 "specialistIds", []
             ):
                 scores[specialist] = scores.get(specialist, 0.0) + match.score
-                support.setdefault(specialist, []).append(
-                    match.memory["memoryId"]
-                )
+                support.setdefault(specialist, []).append(root)
         ranked = [
             {
                 "specialistId": specialist,
@@ -581,6 +596,7 @@ class DiagnosticMemoryStore:
             "policy": "deterministic-provenance-preserving-case-similarity",
             "matches": [item.to_dict() for item in matches],
             "specialistHints": ranked,
+            "routingLineageCount": len(by_root),
             "authorityCeiling": "route-only",
             "causalClaim": False,
         }
