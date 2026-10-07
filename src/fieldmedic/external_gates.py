@@ -28,6 +28,22 @@ GATE_SPECS: dict[str, dict[str, str]] = {
     },
 }
 
+LICENSE_MARKERS = {
+    "MIT": ("permission is hereby granted, free of charge",),
+    "Apache-2.0": ("apache license", "version 2.0"),
+    "BSD-2-Clause": ("redistribution and use in source and binary forms",),
+    "BSD-3-Clause": ("redistribution and use in source and binary forms",),
+    "GPL-2.0-only": ("gnu general public license", "version 2"),
+    "GPL-2.0-or-later": ("gnu general public license", "version 2"),
+    "GPL-3.0-only": ("gnu general public license", "version 3"),
+    "GPL-3.0-or-later": ("gnu general public license", "version 3"),
+    "LGPL-2.1-only": ("gnu lesser general public license",),
+    "LGPL-2.1-or-later": ("gnu lesser general public license",),
+    "LGPL-3.0-only": ("gnu lesser general public license",),
+    "LGPL-3.0-or-later": ("gnu lesser general public license",),
+    "MPL-2.0": ("mozilla public license", "2.0"),
+}
+
 OPEN_LICENSE_IDS = {
     "MIT",
     "Apache-2.0",
@@ -101,6 +117,15 @@ def import_external_gate(
         if redistribution_allowed is not True:
             raise ExternalGateError(
                 "NetMedic license evidence must explicitly allow redistribution"
+            )
+        license_text = source_receipt.read_text(
+            encoding="utf-8",
+            errors="replace",
+        ).lower()
+        markers = LICENSE_MARKERS.get(str(license_id), ())
+        if not markers or not all(marker in license_text for marker in markers):
+            raise ExternalGateError(
+                "imported NetMedic license text does not match the declared SPDX family"
             )
 
     digest = _sha256(source_receipt)
@@ -206,6 +231,13 @@ def external_gate_from_home(
     kind: str,
     expected_engine_version: str | None,
 ) -> dict[str, Any]:
+    if not expected_engine_version:
+        return {
+            "status": "UNPROVEN_BY_LOCAL_RECEIPT",
+            "record_path": None,
+            "record_sha256": None,
+            "errors": ["current engine version is unavailable"],
+        }
     latest = _gate_root(home, kind) / "latest.json"
     if not latest.exists():
         return {
