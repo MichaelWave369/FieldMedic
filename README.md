@@ -1,4 +1,4 @@
-# Field Medic v0.2.0
+# Field Medic v0.3.0
 
 **Field Medic** is the orchestration layer above two independent diagnostic engines:
 
@@ -12,7 +12,7 @@ The engines are intentionally **not merged**. Field Medic speaks to each through
 
 > Measurement is not inference. Inference is not authority. A recommendation is not an executed action.
 
-v0.1 therefore grants Agent Medic only these capabilities:
+Field Medic grants Agent Medic only these capabilities:
 
 1. **OBSERVE** existing machine-readable evidence.
 2. **NORMALIZE** it without rewriting source payloads.
@@ -30,6 +30,10 @@ Requires Python 3.11+ and no third-party runtime dependencies.
 python -m pip install -e .
 fieldmedic health --drivemedic "C:\\Program Files\\DriveMedic\\drivemedic.exe" --netmedic "C:\\Tools\\netmedic.exe"
 fieldmedic doctor "internet freezes for 10 seconds" --drivemedic "...\\drivemedic.exe" --netmedic "...\\netmedic.exe"
+fieldmedic specialists
+fieldmedic models
+# Optional: let the selected local Ollama model refine the governed synthesis
+fieldmedic doctor "wifi drops when Windows freezes" --drivemedic "..." --netmedic "..." --local-reasoning
 ```
 
 You can also set:
@@ -68,7 +72,28 @@ FIELDMEDIC_HOME=...
                   hook            hook           hook
 ```
 
-See `docs/ARCHITECTURE.md`, `docs/GOVERNANCE.md`, `docs/CORRELATION.md`, and `docs/ROADMAP.md`.\n\n## Native correlation\n\nRung 1 adds deterministic timestamp normalization, a cross-source evidence/event graph, bounded co-occurrence windows, diagnostic-tension detection, same-subject contradiction detection, and a temporal-association score that is explicitly **not** probability or causal confidence. Correlation receipts always retain `causal_claim=false`.
+See `docs/ARCHITECTURE.md`, `docs/GOVERNANCE.md`, `docs/CORRELATION.md`, and `docs/ROADMAP.md`.
+
+## Native correlation
+
+Rung 1 adds deterministic timestamp normalization, a cross-source evidence/event graph, bounded co-occurrence windows, diagnostic-tension detection, same-subject contradiction detection, and a temporal-association score that is explicitly **not** probability or causal confidence. Correlation receipts always retain `causal_claim=false`.
+
+## Specialist reasoning
+
+Rung 2 adds bounded specialist capability descriptors, an optional BrainC routing bridge, localhost-only Ollama discovery, cheap-local-first model selection, sparse escalation rules, and evidence-cited synthesis receipts.
+
+The reasoning policy is intentionally asymmetric:
+
+```text
+deterministic evidence
+  -> cheapest adequate local utility model
+  -> local specialist model when needed
+  -> frontier model only after unresolved local specialist work
+```
+
+BrainC can choose specialists and reasoning tier, but cannot create observations, grant authority, invent unknown specialists, or open the frontier gate. Local model synthesis is opt-in and is rejected if it invents evidence IDs or asserts causation.
+
+See `docs/SPECIALIST_PROTOCOL.md`.
 
 ## Free and open source
 
