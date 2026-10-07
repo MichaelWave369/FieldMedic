@@ -190,6 +190,7 @@ class AgentMedic:
                 "policy": "deterministic-provenance-preserving-case-similarity",
                 "matches": [],
                 "specialistHints": [],
+                "routingLineageCount": 0,
                 "authorityCeiling": "route-only",
                 "causalClaim": False,
                 "status": "PROVENANCE_INVALID_OR_UNAVAILABLE",
