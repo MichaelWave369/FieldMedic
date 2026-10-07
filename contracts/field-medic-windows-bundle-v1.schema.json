@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fieldmedic.local/schema/field-medic-windows-bundle-v1.schema.json",
+  "title": "Field Medic Windows Bundle v1",
+  "type": "object",
+  "required": [
+    "schema", "fieldmedic_version", "build_time_policy", "files",
+    "bundles_drivemedic", "bundles_netmedic", "engine_handoff",
+    "default_uninstall_preserves_data", "manifest_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "field-medic-windows-bundle-v1"},
+    "fieldmedic_version": {"type": "string"},
+    "build_time_policy": {"const": "deterministic-no-wall-clock"},
+    "bundles_drivemedic": {"const": false},
+    "bundles_netmedic": {"const": false},
+    "engine_handoff": {"const": "paths-only"},
+    "default_uninstall_preserves_data": {"const": true},
+    "manifest_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "additionalProperties": true
+}
