@@ -1,0 +1,18 @@
+{
+  "schema": "field-medic-evidence-v1",
+  "evidence_id": "ev-example",
+  "case_id": "case-example",
+  "source": "drivemedic",
+  "source_version": "1.0.0-rc13",
+  "observed_at": "2026-10-07T00:00:00Z",
+  "ingested_at": "2026-10-07T00:00:01Z",
+  "category": "host.status",
+  "claim_class": "observation",
+  "summary": "Example only",
+  "payload_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "payload": {"example": true},
+  "confidence": null,
+  "causal_claim": false,
+  "authority": "observe",
+  "provenance": {"adapter": "status-json"}
+}
