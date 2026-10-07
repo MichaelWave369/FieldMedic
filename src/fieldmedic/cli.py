@@ -39,6 +39,7 @@ from .repair_runner import RepairRunner
 from .release_receipt import build_release_receipt
 from .router import route
 from .specialists import list_specialists
+from .windows_qualification import run_windows_repair_qualification
 
 
 def _home() -> Path:
@@ -121,6 +122,21 @@ def main(argv=None) -> int:
     rr.add_argument("--output", default="fieldmedic-release-receipt.json")
     rr.add_argument("--drivemedic", default=os.environ.get("DRIVEMEDIC_BIN"))
     rr.add_argument("--netmedic", default=os.environ.get("NETMEDIC_BIN"))
+
+    wq = sub.add_parser(
+        "qualify-windows-repairs",
+        help="run live apply/measure/rollback qualification for both Windows repair executors",
+    )
+    wq.add_argument("--interface-index", required=True, type=int)
+    wq.add_argument(
+        "--address-family",
+        default="IPv4",
+        choices=["IPv4", "IPv6"],
+    )
+    wq.add_argument("--temporary-metric", required=True, type=int)
+    wq.add_argument("--operator", required=True)
+    wq.add_argument("--drivemedic", default=os.environ.get("DRIVEMEDIC_BIN"))
+    wq.add_argument("--netmedic", default=os.environ.get("NETMEDIC_BIN"))
 
     d = sub.add_parser("doctor", help="open a governed diagnostic case")
     d.add_argument("symptom")
@@ -265,6 +281,7 @@ def main(argv=None) -> int:
 
     args = p.parse_args(argv)
     agent = AgentMedic(_home(), brainc_binary=args.brainc)
+    exit_code = 0
 
     if args.cmd == "health":
         result = agent.health(
@@ -316,6 +333,18 @@ def main(argv=None) -> int:
             "path": str(output),
             "receipt": receipt,
         }
+    elif args.cmd == "qualify-windows-repairs":
+        result = run_windows_repair_qualification(
+            home=_home(),
+            drivemedic=args.drivemedic,
+            netmedic=args.netmedic,
+            interface_index=args.interface_index,
+            address_family=args.address_family,
+            temporary_metric=args.temporary_metric,
+            operator_label=args.operator,
+        )
+        if result.get("status") != "PASS":
+            exit_code = 2
     elif args.cmd == "doctor":
         result = agent.doctor(
             args.symptom,
@@ -549,7 +578,7 @@ def main(argv=None) -> int:
             )
 
     print(json.dumps(result, indent=2, ensure_ascii=False))
-    return 0
+    return exit_code
 
 
 if __name__ == "__main__":
