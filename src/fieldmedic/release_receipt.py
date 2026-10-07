@@ -10,6 +10,7 @@ from typing import Any
 from . import __version__
 from .discovery import discover_engines
 from .hashutil import sha256_json
+from .installation import install_gate_from_home
 from .repair_executors import list_repair_actions
 from .windows_qualification import qualification_gate_from_home
 
@@ -43,13 +44,16 @@ def build_release_receipt(
     discovery = discover_engines(
         drivemedic=drivemedic,
         netmedic=netmedic,
+        home=home,
     )
     inventory = package_inventory()
     windows_repair_gate = qualification_gate_from_home(home)
+    windows_install_gate = install_gate_from_home(home)
     gates = {
         "python_runtime_supported": sys.version_info >= (3, 11),
         "drivemedic_discovered": bool(discovery["drivemedic"]["present"]),
         "netmedic_discovered": bool(discovery["netmedic"]["present"]),
+        "windows_install_handoff": windows_install_gate["status"],
         "drivemedic_lifecycle_qualified": "UNPROVEN_BY_LOCAL_RECEIPT",
         "netmedic_field_promoted": "UNPROVEN_BY_LOCAL_RECEIPT",
         "live_windows_repair_executors_qualified": windows_repair_gate["status"],
@@ -71,6 +75,7 @@ def build_release_receipt(
         "package_inventory_sha256": sha256_json(inventory),
         "release_gates": gates,
         "qualification_receipts": {
+            "windows_install": windows_install_gate,
             "windows_repair": windows_repair_gate,
         },
     }

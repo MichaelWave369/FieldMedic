@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fieldmedic.local/schema/field-medic-engine-config-v1.schema.json",
+  "title": "Field Medic Engine Config v1",
+  "type": "object",
+  "required": [
+    "schema", "updated_at", "drivemedic", "netmedic", "config_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "field-medic-engine-config-v1"},
+    "updated_at": {"type": "string"},
+    "drivemedic": {"type": ["string", "null"]},
+    "netmedic": {"type": ["string", "null"]},
+    "config_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "additionalProperties": false
+}

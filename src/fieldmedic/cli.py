@@ -16,6 +16,7 @@ from .experiments import (
     propose_experiment,
     save_json,
 )
+from .installation import write_install_receipt
 from .ledger import EvidenceLedger
 from .local_models import discover_local_models
 from .models import ClaimClass, Source
@@ -38,14 +39,14 @@ from .repair_governance import (
 from .repair_runner import RepairRunner
 from .release_receipt import build_release_receipt
 from .router import route
+from .settings import default_home, load_engine_config, write_engine_config
 from .specialists import list_specialists
+from .windows_bundle import build_windows_bundle
 from .windows_qualification import run_windows_repair_qualification
 
 
 def _home() -> Path:
-    return Path(
-        os.environ.get("FIELDMEDIC_HOME", str(Path.home() / ".fieldmedic"))
-    ).expanduser()
+    return default_home()
 
 
 def _memory_store() -> DiagnosticMemoryStore:
@@ -105,6 +106,35 @@ def main(argv=None) -> int:
     disc = sub.add_parser("discover", help="discover and probe DriveMedic + NetMedic")
     disc.add_argument("--drivemedic", default=os.environ.get("DRIVEMEDIC_BIN"))
     disc.add_argument("--netmedic", default=os.environ.get("NETMEDIC_BIN"))
+
+    cfg = sub.add_parser(
+        "configure-engines",
+        help="store hash-bound local DriveMedic / NetMedic paths for discovery",
+    )
+    cfg.add_argument("--drivemedic")
+    cfg.add_argument("--netmedic")
+    sub.add_parser("engine-config", help="show local engine discovery handoff config")
+
+    ir = sub.add_parser(
+        "installation-receipt",
+        help="write the current Windows installation handoff receipt",
+    )
+    ir.add_argument("--install-root", required=True)
+    ir.add_argument("--runtime-root", required=True)
+    ir.add_argument("--wheel", required=True)
+    ir.add_argument("--launcher", required=True)
+    ir.add_argument("--dashboard-launcher", required=True)
+    ir.add_argument("--uninstaller", required=True)
+    ir.add_argument("--path-added", action="store_true")
+    ir.add_argument("--output")
+
+    wb = sub.add_parser(
+        "build-windows-bundle",
+        help="build a deterministic FieldMedic-only Windows release bundle",
+    )
+    wb.add_argument("--wheel", required=True)
+    wb.add_argument("--repository-root", default=".")
+    wb.add_argument("--output", required=True)
 
     ce = sub.add_parser("case-export", help="export one portable hash-attested case bundle")
     ce.add_argument("case_id")
@@ -299,6 +329,42 @@ def main(argv=None) -> int:
         result = discover_engines(
             drivemedic=args.drivemedic,
             netmedic=args.netmedic,
+            home=_home(),
+        )
+    elif args.cmd == "configure-engines":
+        result = write_engine_config(
+            home=_home(),
+            drivemedic=args.drivemedic,
+            netmedic=args.netmedic,
+        )
+    elif args.cmd == "engine-config":
+        result = load_engine_config(_home())
+    elif args.cmd == "installation-receipt":
+        output = (
+            Path(args.output)
+            if args.output
+            else _home() / "installation" / "install.json"
+        )
+        receipt = write_install_receipt(
+            output,
+            home=_home(),
+            install_root=Path(args.install_root),
+            runtime_root=Path(args.runtime_root),
+            wheel=Path(args.wheel),
+            launcher=Path(args.launcher),
+            dashboard_launcher=Path(args.dashboard_launcher),
+            uninstaller=Path(args.uninstaller),
+            path_added=args.path_added,
+        )
+        result = {
+            "path": str(output),
+            "receipt": receipt,
+        }
+    elif args.cmd == "build-windows-bundle":
+        result = build_windows_bundle(
+            wheel=Path(args.wheel),
+            repository_root=Path(args.repository_root),
+            output=Path(args.output),
         )
     elif args.cmd == "case-export":
         result = export_case(

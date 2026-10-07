@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fieldmedic.local/schema/field-medic-windows-install-receipt-v1.schema.json",
+  "title": "Field Medic Windows Install Receipt v1",
+  "type": "object",
+  "required": [
+    "schema", "fieldmedic_version", "installed_at", "platform",
+    "home", "install_root", "runtime_root", "wheel", "launchers", "uninstaller",
+    "path_added", "engine_config", "engine_discovery",
+    "data_preserved_on_default_uninstall", "receipt_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "field-medic-windows-install-receipt-v1"},
+    "fieldmedic_version": {"type": "string"},
+    "path_added": {"type": "boolean"},
+    "data_preserved_on_default_uninstall": {"const": true},
+    "receipt_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "additionalProperties": true
+}

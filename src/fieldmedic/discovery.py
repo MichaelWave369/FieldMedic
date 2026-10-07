@@ -8,6 +8,8 @@ import shutil
 import subprocess
 from typing import Any
 
+from .settings import load_engine_config
+
 
 @dataclass(frozen=True)
 class EngineProbe:
@@ -34,12 +36,22 @@ def _run(path: Path, args: list[str], timeout: int = 20) -> subprocess.Completed
     )
 
 
-def _candidate_paths(engine: str) -> list[tuple[Path, str]]:
+def _candidate_paths(
+    engine: str,
+    *,
+    home: Path | None = None,
+) -> list[tuple[Path, str]]:
     candidates: list[tuple[Path, str]] = []
     env_name = "DRIVEMEDIC_BIN" if engine == "drivemedic" else "NETMEDIC_BIN"
     env_value = os.environ.get(env_name)
     if env_value:
         candidates.append((Path(env_value).expanduser(), f"env:{env_name}"))
+
+    config = load_engine_config(home)
+    if config.get("status") == "CONFIGURED":
+        configured = config.get(engine)
+        if configured:
+            candidates.append((Path(str(configured)), "config:engines.json"))
 
     executable = "drivemedic.exe" if os.name == "nt" and engine == "drivemedic" else (
         "netmedic.exe" if os.name == "nt" else engine
@@ -82,18 +94,27 @@ def _candidate_paths(engine: str) -> list[tuple[Path, str]]:
     return unique
 
 
-def _select(engine: str, explicit: str | None = None) -> tuple[Path | None, str | None]:
+def _select(
+    engine: str,
+    explicit: str | None = None,
+    *,
+    home: Path | None = None,
+) -> tuple[Path | None, str | None]:
     if explicit:
         path = Path(explicit).expanduser()
         return (path, "explicit")
-    for path, source in _candidate_paths(engine):
+    for path, source in _candidate_paths(engine, home=home):
         if path.is_file():
             return path, source
     return None, None
 
 
-def probe_drivemedic(explicit: str | None = None) -> EngineProbe:
-    path, source = _select("drivemedic", explicit)
+def probe_drivemedic(
+    explicit: str | None = None,
+    *,
+    home: Path | None = None,
+) -> EngineProbe:
+    path, source = _select("drivemedic", explicit, home=home)
     if path is None or not path.is_file():
         return EngineProbe(
             engine="drivemedic",
@@ -151,8 +172,12 @@ def probe_drivemedic(explicit: str | None = None) -> EngineProbe:
     )
 
 
-def probe_netmedic(explicit: str | None = None) -> EngineProbe:
-    path, source = _select("netmedic", explicit)
+def probe_netmedic(
+    explicit: str | None = None,
+    *,
+    home: Path | None = None,
+) -> EngineProbe:
+    path, source = _select("netmedic", explicit, home=home)
     if path is None or not path.is_file():
         return EngineProbe(
             engine="netmedic",
@@ -206,13 +231,16 @@ def discover_engines(
     *,
     drivemedic: str | None = None,
     netmedic: str | None = None,
+    home: Path | None = None,
 ) -> dict[str, Any]:
-    drive = probe_drivemedic(drivemedic)
-    net = probe_netmedic(netmedic)
+    config = load_engine_config(home)
+    drive = probe_drivemedic(drivemedic, home=home)
+    net = probe_netmedic(netmedic, home=home)
     return {
         "schema": "field-medic-engine-discovery-v1",
         "drivemedic": drive.to_dict(),
         "netmedic": net.to_dict(),
+        "engine_config": config,
         "ready_for_diagnostics": bool(
             drive.present and net.present
             and drive.healthy is not False

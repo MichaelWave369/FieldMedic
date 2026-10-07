@@ -79,9 +79,21 @@ The Rung 5 contract/transaction suite is CI-qualified with deterministic fake mu
 - [x] exact rollback required for PASS
 - [x] release receipt admits only valid current-version PASS receipt
 
+### RC3 Windows install / uninstall handoff
+
+- [x] per-user versioned Python runtime install
+- [x] deterministic FieldMedic-only Windows bundle
+- [x] bundle SHA-256 manifest verification before install
+- [x] hash-bound engine path configuration
+- [x] launcher + dashboard launcher handoff
+- [x] install receipt integrated into release receipt
+- [x] uninstall preserves data by default
+- [x] destructive data removal requires double confirmation
+- [x] partial install rolls back runtime / config / launchers / PATH changes
+
 ### Stable promotion gates
 
-- [ ] Windows installer / uninstall / discovery handoff
+- [ ] run RC3 installer + default uninstall smoke on a real Windows workstation
 - [ ] run RC2 harness successfully on a real elevated Windows workstation
 - [ ] DriveMedic v1 lifecycle qualification completed
 - [ ] NetMedic Windows/field promotion gates completed
