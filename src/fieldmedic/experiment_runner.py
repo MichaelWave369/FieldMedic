@@ -94,6 +94,12 @@ class GovernedExperimentRunner:
         self.gate.require(
             proposal=proposal,
             approval=approval,
+            scope="netmedic.protocol.preflight",
+            require_physical_confirmations=True,
+        )
+        self.gate.require(
+            proposal=proposal,
+            approval=approval,
             scope="netmedic.protocol.capture",
             require_physical_confirmations=True,
         )
