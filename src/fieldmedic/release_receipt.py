@@ -9,8 +9,14 @@ from typing import Any
 
 from . import __version__
 from .discovery import discover_engines
+from .external_gates import (
+    drivemedic_lifecycle_gate_from_home,
+    netmedic_field_gate_from_home,
+)
 from .hashutil import sha256_json
+from .install_smoke import install_smoke_gate_from_home
 from .installation import install_gate_from_home
+from .licensing import netmedic_license_gate_from_home
 from .repair_executors import list_repair_actions
 from .windows_qualification import qualification_gate_from_home
 
@@ -49,13 +55,19 @@ def build_release_receipt(
     inventory = package_inventory()
     windows_repair_gate = qualification_gate_from_home(home)
     windows_install_gate = install_gate_from_home(home)
+    windows_install_smoke_gate = install_smoke_gate_from_home(home)
+    drive_lifecycle_gate = drivemedic_lifecycle_gate_from_home(home)
+    net_field_gate = netmedic_field_gate_from_home(home)
+    net_license_gate = netmedic_license_gate_from_home(home)
     gates = {
         "python_runtime_supported": sys.version_info >= (3, 11),
         "drivemedic_discovered": bool(discovery["drivemedic"]["present"]),
         "netmedic_discovered": bool(discovery["netmedic"]["present"]),
         "windows_install_handoff": windows_install_gate["status"],
-        "drivemedic_lifecycle_qualified": "UNPROVEN_BY_LOCAL_RECEIPT",
-        "netmedic_field_promoted": "UNPROVEN_BY_LOCAL_RECEIPT",
+        "windows_install_smoke_qualified": windows_install_smoke_gate["status"],
+        "drivemedic_lifecycle_qualified": drive_lifecycle_gate["status"],
+        "netmedic_field_promoted": net_field_gate["status"],
+        "netmedic_public_license": net_license_gate["status"],
         "live_windows_repair_executors_qualified": windows_repair_gate["status"],
     }
     body = {
@@ -76,7 +88,11 @@ def build_release_receipt(
         "release_gates": gates,
         "qualification_receipts": {
             "windows_install": windows_install_gate,
+            "windows_install_smoke": windows_install_smoke_gate,
             "windows_repair": windows_repair_gate,
+            "drivemedic_lifecycle": drive_lifecycle_gate,
+            "netmedic_field": net_field_gate,
+            "netmedic_license": net_license_gate,
         },
     }
     return {**body, "receipt_sha256": sha256_json(body)}
