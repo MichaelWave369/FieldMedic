@@ -53,6 +53,18 @@ class CasePortableTests(unittest.TestCase):
                 (source / "evidence.jsonl").read_bytes(),
             )
 
+    def test_nonportable_case_id_is_rejected_before_export(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            case = root / "source" / "bad"
+            case.mkdir(parents=True)
+            (case / "case.json").write_text(
+                json.dumps({"case_id": "bad:windows:id"}),
+                encoding="utf-8",
+            )
+            with self.assertRaises(CaseBundleError):
+                export_case(case, root / "bad.zip")
+
     def test_import_never_overwrites_existing_case(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
