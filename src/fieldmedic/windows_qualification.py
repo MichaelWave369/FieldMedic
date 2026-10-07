@@ -87,6 +87,8 @@ def validate_windows_qualification_receipt(
             errors.append(f"qualification test did not pass: {key}")
         if test.get("rollback_exact") is not True:
             errors.append(f"exact rollback not proven: {key}")
+        if test.get("rollback_verification_status") != "CAPTURED":
+            errors.append(f"post-rollback verifier capture not proven: {key}")
         if test.get("verification_status") != "MEASURED_PENDING_OPERATOR_OUTCOME":
             errors.append(f"independent verification not proven: {key}")
         if not test.get("execution_evidence_id"):
@@ -221,9 +223,14 @@ def _run_repair_test(
     if rollback is None:
         raise WindowsQualificationError(caught or "repair rollback did not produce a receipt")
     exact = rollback.get("status") in {"ROLLED_BACK", "ALREADY_AT_ROLLBACK_STATE"}
+    rollback_verified = rollback.get("independent_verification_status") == "CAPTURED"
     if not exact:
         raise WindowsQualificationError(
             caught or f"repair rollback status was not exact: {rollback.get('status')}"
+        )
+    if not rollback_verified:
+        raise WindowsQualificationError(
+            "exact target rollback occurred but DriveMedic/NetMedic post-rollback capture failed"
         )
     if caught:
         raise WindowsQualificationError(caught)
@@ -239,6 +246,9 @@ def _run_repair_test(
         "verification_status": verification["status"],
         "rollback_status": rollback["status"],
         "rollback_exact": True,
+        "rollback_verification_status": rollback.get(
+            "independent_verification_status"
+        ),
         "execution_evidence_id": execution.get("execution_evidence_id"),
         "verification_evidence_id": verification.get("verification_evidence_id"),
         "rollback_evidence_id": rollback.get("rollback_evidence_id"),
