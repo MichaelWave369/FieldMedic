@@ -69,10 +69,20 @@ The Rung 5 contract/transaction suite is CI-qualified with deterministic fake mu
 - [x] local release receipts with explicit unproven gates
 - [x] FieldMedic released under MIT
 
+### RC2 live Windows qualification harness
+
+- [x] current-version hash-bound qualification receipt
+- [x] real Repair Gate / real Windows backend path
+- [x] disposable process-priority target
+- [x] operator-selected interface metric target
+- [x] DriveMedic + NetMedic before/after evidence
+- [x] exact rollback required for PASS
+- [x] release receipt admits only valid current-version PASS receipt
+
 ### Stable promotion gates
 
 - [ ] Windows installer / uninstall / discovery handoff
-- [ ] live Windows qualification of bounded repair executors
+- [ ] run RC2 harness successfully on a real elevated Windows workstation
 - [ ] DriveMedic v1 lifecycle qualification completed
 - [ ] NetMedic Windows/field promotion gates completed
 - [ ] NetMedic release licensing aligned for free public use

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fieldmedic.local/schema/field-medic-windows-repair-qualification-v1.schema.json",
+  "title": "Field Medic Windows Repair Qualification v1",
+  "type": "object",
+  "required": [
+    "schema", "qualification_id", "fieldmedic_version", "generated_at",
+    "status", "case_id", "operator_label", "operator_label_semantics",
+    "platform", "engine_discovery", "requested_interface_test",
+    "tests", "errors", "claim_boundary", "receipt_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "field-medic-windows-repair-qualification-v1"},
+    "status": {"enum": ["PASS", "FAIL"]},
+    "tests": {
+      "type": "object",
+      "required": [
+        "windows.process.priority",
+        "windows.interface.metric"
+      ]
+    },
+    "receipt_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "additionalProperties": true
+}
