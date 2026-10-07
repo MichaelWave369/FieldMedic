@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fieldmedic.local/schema/field-medic-repair-grant-v1.schema.json",
+  "title": "Field Medic Repair Grant v1",
+  "type": "object",
+  "required": [
+    "schema", "grant_id", "proposal_id", "proposal_sha256",
+    "preflight_id", "preflight_sha256", "case_id", "action_key",
+    "operator_label", "operator_label_semantics", "approved_scopes",
+    "issued_at", "expires_at", "generic_shell_authorized",
+    "authority", "grant_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "field-medic-repair-grant-v1"},
+    "approved_scopes": {
+      "type": "array",
+      "contains": {"const": "repair.execute"}
+    },
+    "generic_shell_authorized": {"const": false},
+    "authority": {"const": "bounded-repair"},
+    "grant_sha256": {"type": "string"}
+  },
+  "additionalProperties": true
+}
