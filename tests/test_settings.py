@@ -33,6 +33,28 @@ class SettingsTests(unittest.TestCase):
                 engine_config_path(root / "home"),
             )
 
+    def test_updating_one_engine_preserves_the_other(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            home = root / "home"
+            drive1 = root / "drive1.exe"
+            drive2 = root / "drive2.exe"
+            net = root / "net.exe"
+            for path in (drive1, drive2, net):
+                path.write_bytes(b"x")
+            write_engine_config(
+                home=home,
+                drivemedic=str(drive1),
+                netmedic=str(net),
+            )
+            write_engine_config(
+                home=home,
+                drivemedic=str(drive2),
+            )
+            loaded = load_engine_config(home)
+            self.assertEqual(loaded["drivemedic"], str(drive2.resolve()))
+            self.assertEqual(loaded["netmedic"], str(net.resolve()))
+
     def test_tampered_config_is_not_used(self):
         with tempfile.TemporaryDirectory() as td:
             home = Path(td)
