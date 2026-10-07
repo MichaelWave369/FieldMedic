@@ -16,9 +16,13 @@ from .local_reasoner import ollama_synthesis, LocalReasoningError
 from .models import Source, ClaimClass, ActionProposal, Authority, utc_now
 from .policy import RealityGate
 from .router import route
-from .memory import nbg_projection
+from .nbg_memory import (
+    DiagnosticMemoryStore,
+    case_to_inferred_memory,
+    merge_specialist_hints,
+)
 from .reasoning import plan_reasoning
-from .specialists import plan_specialists, materialize_specialist_plan
+from .specialists import SPECIALISTS, plan_specialists, materialize_specialist_plan
 from .synthesis import build_synthesis
 
 
@@ -155,6 +159,45 @@ class AgentMedic:
         evidence.append(correlation_evidence)
 
         specialist_plan = plan_specialists(symptom, decision.domain, correlation)
+        memory_store = DiagnosticMemoryStore(self.home / "memory" / "nbg")
+        try:
+            memory_routing = memory_store.routing_hints(
+                symptom=symptom,
+                domain=decision.domain,
+                specialist_ids=specialist_plan["specialist_ids"],
+            )
+            merged_ids, memory_hints = merge_specialist_hints(
+                specialist_plan["specialist_ids"],
+                memory_routing,
+                known_ids=SPECIALISTS,
+            )
+            if memory_hints:
+                specialist_plan = materialize_specialist_plan(
+                    merged_ids,
+                    reasons=[
+                        *specialist_plan.get("reasons", []),
+                        *[
+                            "nbg-memory: prior provenance-preserving case similarity supports "
+                            + item
+                            for item in memory_hints
+                        ],
+                    ],
+                    source="deterministic+nbg-memory",
+                )
+        except Exception as exc:
+            memory_routing = {
+                "schema": "field-medic-memory-routing-v1",
+                "policy": "deterministic-provenance-preserving-case-similarity",
+                "matches": [],
+                "specialistHints": [],
+                "routingLineageCount": 0,
+                "authorityCeiling": "route-only",
+                "causalClaim": False,
+                "status": "PROVENANCE_INVALID_OR_UNAVAILABLE",
+                "error": str(exc),
+            }
+            errors.append({"source": "nbg-memory", "error": str(exc)})
+
         local_models = discover_local_models() if discover_models else []
         reasoning_plan = plan_reasoning(
             domain=decision.domain,
@@ -187,10 +230,17 @@ class AgentMedic:
             }
             try:
                 brainc_result = self.brainc.route(request, frontier_allowed=False)
+                brainc_ids = list(dict.fromkeys([
+                    *specialist_plan["specialist_ids"],
+                    *brainc_result["specialist_ids"],
+                ]))
                 specialist_plan = materialize_specialist_plan(
-                    brainc_result["specialist_ids"],
-                    reasons=brainc_result["reasons"],
-                    source="brainc",
+                    brainc_ids,
+                    reasons=[
+                        *specialist_plan.get("reasons", []),
+                        *brainc_result["reasons"],
+                    ],
+                    source="deterministic+memory+brainc",
                 )
                 requested_tier = brainc_result["reasoning_tier"]
                 selected = choose_model(local_models, requested_tier)
@@ -291,23 +341,14 @@ class AgentMedic:
             correlation,
         )
         route_dict = decision.to_dict()
-        memory_candidate = nbg_projection(
-            case_id=case_id,
-            symptom=symptom,
-            route=route_dict,
-            evidence_ids=[item.evidence_id for item in evidence],
-        )
         case_dir.mkdir(parents=True, exist_ok=True)
-        (case_dir / "nbg-candidate.json").write_text(
-            json.dumps(memory_candidate, indent=2), encoding="utf-8"
-        )
-
         result = {
             "schema": "field-medic-case-v1",
             "case_id": case_id,
             "symptom": symptom,
             "routing": route_dict,
             "specialist_plan": specialist_plan,
+            "memory_routing": memory_routing,
             "reasoning_plan": reasoning_plan,
             "brainc": {
                 "configured": self.brainc.available,
@@ -325,8 +366,20 @@ class AgentMedic:
                 "agent_can": ["observe", "infer", "propose"],
                 "agent_cannot": ["execute"],
             },
-            "memory_candidate": memory_candidate,
         }
+        candidate_memory = case_to_inferred_memory(result)
+        memory_candidate = {
+            "schema": "field-medic-nbg-candidate-v2",
+            "case_id": case_id,
+            "admission": "CANDIDATE_ONLY",
+            "memory": candidate_memory,
+            "causal_claim": False,
+            "action_authorized": False,
+        }
+        result["memory_candidate"] = memory_candidate
+        (case_dir / "nbg-candidate.json").write_text(
+            json.dumps(memory_candidate, indent=2), encoding="utf-8"
+        )
         (case_dir / "case.json").write_text(
             json.dumps(result, indent=2), encoding="utf-8"
         )

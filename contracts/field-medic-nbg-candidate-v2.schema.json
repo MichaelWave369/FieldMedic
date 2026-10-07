@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fieldmedic.local/schema/field-medic-nbg-candidate-v2.schema.json",
+  "title": "Field Medic NBG Candidate v2",
+  "type": "object",
+  "required": [
+    "schema", "case_id", "admission", "memory",
+    "causal_claim", "action_authorized"
+  ],
+  "properties": {
+    "schema": {"const": "field-medic-nbg-candidate-v2"},
+    "case_id": {"type": "string"},
+    "admission": {"const": "CANDIDATE_ONLY"},
+    "memory": {
+      "type": "object",
+      "required": [
+        "schemaVersion", "memoryId", "content", "epistemic", "recordFingerprint"
+      ],
+      "properties": {
+        "schemaVersion": {"const": "NBG_EPISTEMIC_1"},
+        "memoryId": {"type": "string"},
+        "content": {"type": "object"},
+        "epistemic": {"type": "object"},
+        "recordFingerprint": {"type": "string"}
+      }
+    },
+    "causal_claim": {"const": false},
+    "action_authorized": {"const": false}
+  },
+  "additionalProperties": false
+}

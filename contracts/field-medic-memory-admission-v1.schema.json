@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fieldmedic.local/schema/field-medic-memory-admission-v1.schema.json",
+  "title": "Field Medic Memory Admission v1",
+  "type": "object",
+  "required": [
+    "schema", "admissionId", "status", "caseId", "memoryId",
+    "recordFingerprint", "operatorLabel", "operatorLabelSemantics",
+    "reason", "knownTime", "actionAuthorized", "admissionFingerprint"
+  ],
+  "properties": {
+    "schema": {"const": "field-medic-memory-admission-v1"},
+    "admissionId": {"type": "string"},
+    "status": {"const": "ADMITTED"},
+    "caseId": {"type": "string"},
+    "memoryId": {"type": "string"},
+    "recordFingerprint": {"type": "string"},
+    "operatorLabel": {"type": "string"},
+    "operatorLabelSemantics": {"type": "string"},
+    "reason": {"type": "string"},
+    "knownTime": {"type": "string"},
+    "actionAuthorized": {"const": false},
+    "admissionFingerprint": {"type": "string"}
+  },
+  "additionalProperties": false
+}

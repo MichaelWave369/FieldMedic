@@ -38,11 +38,11 @@
 
 ## Rung 4 — NBG diagnostic memory
 
-- governed admission from case candidate to durable memory
-- verified-outcome weighting
-- negative/failed-case retention
-- model-independent routing memory
-- provenance-preserving case similarity
+- [x] governed admission from case candidate to durable memory
+- [x] verified-outcome weighting
+- [x] negative/failed-case retention
+- [x] model-independent routing memory
+- [x] provenance-preserving case similarity
 
 ## Rung 5 — Bounded repair executors
 
