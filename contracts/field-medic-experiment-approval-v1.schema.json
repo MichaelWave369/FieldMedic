@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fieldmedic.local/schema/field-medic-experiment-approval-v1.schema.json",
+  "title": "Field Medic Experiment Approval v1",
+  "type": "object",
+  "required": [
+    "schema", "approval_id", "proposal_id", "proposal_sha256", "case_id",
+    "netmedic_case", "operator_label", "operator_label_semantics",
+    "approved_scopes", "confirmations", "issued_at", "expires_at",
+    "authority", "repair_authority"
+  ],
+  "properties": {
+    "schema": {"const": "field-medic-experiment-approval-v1"},
+    "approval_id": {"type": "string"},
+    "proposal_id": {"type": "string"},
+    "proposal_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "case_id": {"type": "string"},
+    "netmedic_case": {"type": "string"},
+    "operator_label": {"type": "string"},
+    "operator_label_semantics": {"type": "string"},
+    "approved_scopes": {"type": "array", "items": {"type": "string"}},
+    "confirmations": {"type": "object"},
+    "issued_at": {"type": "string"},
+    "expires_at": {"type": "string"},
+    "authority": {"const": "operator-approved-diagnostic-measurement"},
+    "repair_authority": {"const": false}
+  },
+  "additionalProperties": false
+}
