@@ -61,6 +61,7 @@ def pass_receipt(version: str = __version__):
             "windows.interface.metric": {
                 "status": "PASS",
                 "rollback_exact": True,
+                "rollback_verification_status": "CAPTURED",
                 "verification_status": "MEASURED_PENDING_OPERATOR_OUTCOME",
                 "execution_evidence_id": "ev-exec-interface",
                 "verification_evidence_id": "ev-verify-interface",
