@@ -21,6 +21,8 @@ class WindowsBundleTests(unittest.TestCase):
             docs.mkdir(parents=True)
             (scripts / "install-windows.ps1").write_text("install", encoding="utf-8")
             (scripts / "uninstall-windows.ps1").write_text("uninstall", encoding="utf-8")
+            (scripts / "smoke-windows-install.ps1").write_text("smoke", encoding="utf-8")
+            (scripts / "write-install-smoke-receipt.py").write_text("writer", encoding="utf-8")
             (docs / "WINDOWS_INSTALL.txt").write_text("readme", encoding="utf-8")
             (repo / "LICENSE").write_text("MIT", encoding="utf-8")
             wheel = root / f"fieldmedic-{__version__}-py3-none-any.whl"
@@ -49,6 +51,8 @@ class WindowsBundleTests(unittest.TestCase):
                 names = set(zf.namelist())
             self.assertIn("install.ps1", names)
             self.assertIn("uninstall.ps1", names)
+            self.assertIn("smoke-windows-install.ps1", names)
+            self.assertIn("write-install-smoke-receipt.py", names)
             self.assertIn(f"packages/{wheel.name}", names)
             self.assertFalse(any("drivemedic" in name.lower() for name in names))
             self.assertFalse(any("netmedic" in name.lower() for name in names))
