@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 import hashlib
 import json
 from pathlib import Path, PurePosixPath
+import re
 import zipfile
 from typing import Any
 
@@ -15,7 +16,9 @@ class CaseBundleError(RuntimeError):
 
 
 MAX_FILE_BYTES = 64 * 1024 * 1024
+MAX_BUNDLE_BYTES = 256 * 1024 * 1024
 MAX_BUNDLE_FILES = 4096
+CASE_ID_RE = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
 
 
 def _sha256_bytes(data: bytes) -> str:
@@ -37,7 +40,13 @@ def _case_id(case_dir: Path) -> str:
     value = json.loads(case_file.read_text(encoding="utf-8"))
     if not isinstance(value, dict) or not str(value.get("case_id", "")).strip():
         raise CaseBundleError("case.json does not contain a valid case_id")
-    return str(value["case_id"])
+    case_id = str(value["case_id"])
+    if not CASE_ID_RE.fullmatch(case_id) or case_id in {".", ".."}:
+        raise CaseBundleError(
+            "case_id must be a Windows-safe portable component "
+            "(letters, digits, dot, underscore, hyphen)"
+        )
+    return case_id
 
 
 def export_case(case_dir: Path, output: Path) -> dict[str, Any]:
@@ -131,8 +140,8 @@ def import_case(bundle: Path, cases_root: Path) -> dict[str, Any]:
         if manifest.get("schema") != "field-medic-case-bundle-v1":
             raise CaseBundleError("unsupported case bundle schema")
         case_id = str(manifest.get("case_id", "")).strip()
-        if not case_id or any(ch in case_id for ch in "/\\"):
-            raise CaseBundleError("invalid case_id in bundle")
+        if not CASE_ID_RE.fullmatch(case_id) or case_id in {".", ".."}:
+            raise CaseBundleError("invalid portable case_id in bundle")
 
         destination = cases_root / case_id
         if destination.exists():
@@ -140,11 +149,28 @@ def import_case(bundle: Path, cases_root: Path) -> dict[str, Any]:
                 f"case already exists; import never overwrites: {destination}"
             )
 
-        expected = {
-            str(item["path"]): item
-            for item in manifest.get("files", [])
-            if isinstance(item, dict) and item.get("path")
-        }
+        manifest_files = manifest.get("files", [])
+        if not isinstance(manifest_files, list):
+            raise CaseBundleError("manifest files must be an array")
+        expected: dict[str, dict[str, Any]] = {}
+        declared_total = 0
+        for item in manifest_files:
+            if not isinstance(item, dict) or not item.get("path"):
+                raise CaseBundleError("invalid file record in manifest")
+            rel = str(item["path"])
+            if rel in expected:
+                raise CaseBundleError(f"duplicate manifest path: {rel}")
+            try:
+                size = int(item["size_bytes"])
+            except (KeyError, TypeError, ValueError) as exc:
+                raise CaseBundleError(f"invalid size for {rel}") from exc
+            if size < 0 or size > MAX_FILE_BYTES:
+                raise CaseBundleError(f"declared file exceeds size limit: {rel}")
+            declared_total += size
+            if declared_total > MAX_BUNDLE_BYTES:
+                raise CaseBundleError("declared bundle exceeds total size limit")
+            expected[rel] = item
+
         actual_names = {
             name[len("case/"):]
             for name in names
@@ -153,10 +179,17 @@ def import_case(bundle: Path, cases_root: Path) -> dict[str, Any]:
         if set(expected) != actual_names:
             raise CaseBundleError("bundle members do not match manifest")
 
+        info_by_name = {info.filename: info for info in zf.infolist()}
         staged: list[tuple[str, bytes]] = []
         for rel, item in expected.items():
             _validate_member(rel)
-            data = zf.read(f"case/{rel}")
+            member_name = f"case/{rel}"
+            info = info_by_name.get(member_name)
+            if info is None:
+                raise CaseBundleError(f"missing bundle member: {rel}")
+            if info.file_size > MAX_FILE_BYTES:
+                raise CaseBundleError(f"expanded file exceeds size limit: {rel}")
+            data = zf.read(member_name)
             if len(data) != int(item["size_bytes"]):
                 raise CaseBundleError(f"size mismatch for {rel}")
             if _sha256_bytes(data) != item["sha256"]:
