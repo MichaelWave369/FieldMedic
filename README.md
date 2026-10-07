@@ -1,4 +1,4 @@
-# Field Medic v0.3.0
+# Field Medic v0.4.0
 
 **Field Medic** is the orchestration layer above two independent diagnostic engines:
 
@@ -94,6 +94,37 @@ deterministic evidence
 BrainC can choose specialists and reasoning tier, but cannot create observations, grant authority, invent unknown specialists, or open the frontier gate. Local model synthesis is opt-in and is rejected if it invents evidence IDs or asserts causation.
 
 See `docs/SPECIALIST_PROTOCOL.md`.
+
+## Governed experiments
+
+Rung 3 binds Agent Medic to NetMedic's native frozen-protocol workflow without granting generic execution authority.
+
+~~~text
+Agent Medic proposal
+  -> SHA-256-bound operator approval
+  -> NetMedic protocol freeze
+  -> fresh physical confirmations + preflight
+  -> one planned-arm capture
+  -> DriveMedic before/after host brackets
+  -> matched analysis
+  -> FieldMedic evidence ledger
+~~~
+
+A capture approval must explicitly authorize both preflight and capture, expires, and requires fresh confirmations of the planned arm, machine stability, test context, and every locked control. The approval cannot authorize repairs.
+
+Example workflow:
+
+~~~powershell
+fieldmedic experiment-propose --case-id CASE --netmedic-case C:\\Cases\\wifi --name "Wi-Fi vs Ethernet" --design-key connection --arm-a wifi --arm-b ethernet --test-label ethernet-ab --control vpn=off
+
+fieldmedic experiment-approve fieldmedic-experiment-proposal.json --operator "local operator" --scope netmedic.protocol.freeze
+
+fieldmedic experiment-freeze fieldmedic-experiment-proposal.json fieldmedic-experiment-proposal-approval.json --netmedic C:\\Tools\\netmedic.exe
+~~~
+
+Capture approval is intentionally separate and should be created only when the physical arm and locked controls are actually confirmed.
+
+See `docs/GOVERNED_EXPERIMENTS.md`.
 
 ## Free and open source
 
