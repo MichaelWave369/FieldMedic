@@ -4,6 +4,9 @@ import json
 import os
 from pathlib import Path
 
+from .case_portable import export_case, import_case
+from .dashboard import write_dashboard
+from .discovery import discover_engines
 from .envelope import wrap_evidence
 from .experiment_runner import GovernedExperimentRunner
 from .experiments import (
@@ -33,6 +36,7 @@ from .repair_governance import (
     save_json as save_repair_json,
 )
 from .repair_runner import RepairRunner
+from .release_receipt import build_release_receipt
 from .router import route
 from .specialists import list_specialists
 
@@ -96,6 +100,27 @@ def main(argv=None) -> int:
 
     sub.add_parser("models", help="discover local-first reasoning models")
     sub.add_parser("specialists", help="list Agent Medic specialist capabilities")
+
+    disc = sub.add_parser("discover", help="discover and probe DriveMedic + NetMedic")
+    disc.add_argument("--drivemedic", default=os.environ.get("DRIVEMEDIC_BIN"))
+    disc.add_argument("--netmedic", default=os.environ.get("NETMEDIC_BIN"))
+
+    ce = sub.add_parser("case-export", help="export one portable hash-attested case bundle")
+    ce.add_argument("case_id")
+    ce.add_argument("output")
+
+    ci = sub.add_parser("case-import", help="import one portable case bundle without overwrite")
+    ci.add_argument("bundle")
+
+    dash = sub.add_parser("dashboard", help="write the read-only operator dashboard")
+    dash.add_argument("--output", default="fieldmedic-dashboard.html")
+    dash.add_argument("--drivemedic", default=os.environ.get("DRIVEMEDIC_BIN"))
+    dash.add_argument("--netmedic", default=os.environ.get("NETMEDIC_BIN"))
+
+    rr = sub.add_parser("release-receipt", help="write a local product/release receipt")
+    rr.add_argument("--output", default="fieldmedic-release-receipt.json")
+    rr.add_argument("--drivemedic", default=os.environ.get("DRIVEMEDIC_BIN"))
+    rr.add_argument("--netmedic", default=os.environ.get("NETMEDIC_BIN"))
 
     d = sub.add_parser("doctor", help="open a governed diagnostic case")
     d.add_argument("symptom")
@@ -253,6 +278,44 @@ def main(argv=None) -> int:
         result = {"models": [item.to_dict() for item in discover_local_models()]}
     elif args.cmd == "specialists":
         result = {"specialists": list_specialists()}
+    elif args.cmd == "discover":
+        result = discover_engines(
+            drivemedic=args.drivemedic,
+            netmedic=args.netmedic,
+        )
+    elif args.cmd == "case-export":
+        result = export_case(
+            _case_dir(args.case_id),
+            Path(args.output),
+        )
+    elif args.cmd == "case-import":
+        result = import_case(
+            Path(args.bundle),
+            _home() / "cases",
+        )
+    elif args.cmd == "dashboard":
+        result = write_dashboard(
+            Path(args.output),
+            home=_home(),
+            drivemedic=args.drivemedic,
+            netmedic=args.netmedic,
+        )
+    elif args.cmd == "release-receipt":
+        receipt = build_release_receipt(
+            home=_home(),
+            drivemedic=args.drivemedic,
+            netmedic=args.netmedic,
+        )
+        output = Path(args.output)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(
+            json.dumps(receipt, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+        result = {
+            "path": str(output),
+            "receipt": receipt,
+        }
     elif args.cmd == "doctor":
         result = agent.doctor(
             args.symptom,
