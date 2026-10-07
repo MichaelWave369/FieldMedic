@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fieldmedic.local/schema/field-medic-memory-routing-v1.schema.json",
+  "title": "Field Medic Memory Routing v1",
+  "type": "object",
+  "required": [
+    "schema", "policy", "matches", "specialistHints",
+    "authorityCeiling", "causalClaim"
+  ],
+  "properties": {
+    "schema": {"const": "field-medic-memory-routing-v1"},
+    "policy": {"const": "deterministic-provenance-preserving-case-similarity"},
+    "matches": {"type": "array"},
+    "specialistHints": {"type": "array"},
+    "authorityCeiling": {"const": "route-only"},
+    "causalClaim": {"const": false}
+  },
+  "additionalProperties": false
+}
