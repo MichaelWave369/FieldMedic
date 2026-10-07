@@ -63,4 +63,5 @@ Only after the prior rungs are qualified:
 - release receipts
 - DriveMedic v1 lifecycle qualification completed
 - NetMedic Windows/field promotion gates completed
-- public licensing decision for NetMedic made explicitly
+- FieldMedic released under MIT
+- NetMedic release licensing aligned for free public use
