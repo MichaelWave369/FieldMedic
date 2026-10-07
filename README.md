@@ -70,6 +70,8 @@ FIELDMEDIC_HOME=...
 
 See `docs/ARCHITECTURE.md`, `docs/GOVERNANCE.md`, and `docs/ROADMAP.md`.
 
-## Important source/licensing boundary
+## Free and open source
 
-This bootstrap contains **no NetMedic source code** and no DriveMedic source code. It calls installed binaries through documented machine-readable surfaces. DriveMedic and NetMedic retain their own licenses and release gates.
+Field Medic is released under the **MIT License** so people can use it, inspect it, modify it, redistribute it, and build on it without asking permission.
+
+This repository does not vendor DriveMedic or NetMedic source code. They remain independent engines connected through machine-readable interfaces.
