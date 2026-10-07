@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fieldmedic.local/schema/field-medic-correlation-v1.schema.json",
+  "title": "Field Medic Correlation Receipt v1",
+  "type": "object",
+  "required": [
+    "schema",
+    "causal_claim",
+    "window_seconds",
+    "source_count",
+    "evidence_ids",
+    "event_count",
+    "cross_source_pairs",
+    "contradictions",
+    "diagnostic_tensions",
+    "temporal_association_strength",
+    "association_strength_semantics",
+    "graph",
+    "limits"
+  ],
+  "properties": {
+    "schema": {"const": "field-medic-correlation-v1"},
+    "causal_claim": {"const": false},
+    "window_seconds": {"type": "integer", "minimum": 1},
+    "source_count": {"type": "integer", "minimum": 0},
+    "evidence_ids": {"type": "array", "items": {"type": "string"}},
+    "event_count": {"type": "integer", "minimum": 0},
+    "cross_source_pairs": {"type": "array"},
+    "contradictions": {"type": "array"},
+    "diagnostic_tensions": {"type": "array"},
+    "temporal_association_strength": {"type": "number", "minimum": 0, "maximum": 0.85},
+    "association_strength_semantics": {"type": "string"},
+    "graph": {
+      "type": "object",
+      "required": ["nodes", "edges"],
+      "properties": {
+        "nodes": {"type": "array"},
+        "edges": {"type": "array"}
+      },
+      "additionalProperties": false
+    },
+    "limits": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": false
+}
