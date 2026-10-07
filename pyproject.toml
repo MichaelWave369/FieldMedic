@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fieldmedic"
+version = "0.1.0"
+description = "Governed orchestration contract for DriveMedic, NetMedic, and Agent Medic"
+requires-python = ">=3.11"
+
+[project.scripts]
+fieldmedic = "fieldmedic.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
