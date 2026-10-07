@@ -119,3 +119,23 @@ def plan_specialists(symptom: str, domain: str, correlation: dict[str, Any]) -> 
         "reasons": reasons,
         "authority_ceiling": "infer",
     }
+
+
+def materialize_specialist_plan(
+    specialist_ids: list[str],
+    *,
+    reasons: list[str] | None = None,
+    source: str = "external-router",
+) -> dict[str, Any]:
+    unique = list(dict.fromkeys(specialist_ids))
+    unknown = [item for item in unique if item not in SPECIALISTS]
+    if unknown:
+        raise ValueError(f"unknown specialist IDs: {unknown}")
+    return {
+        "schema": "field-medic-specialist-plan-v1",
+        "specialist_ids": unique,
+        "specialists": [SPECIALISTS[item].to_dict() for item in unique],
+        "reasons": reasons or [f"{source}: selected {item}" for item in unique],
+        "routing_source": source,
+        "authority_ceiling": "infer",
+    }
