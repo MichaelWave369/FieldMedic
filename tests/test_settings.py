@@ -1,0 +1,65 @@
+import json
+import tempfile
+import unittest
+from pathlib import Path
+
+from fieldmedic.settings import (
+    engine_config_path,
+    load_engine_config,
+    write_engine_config,
+)
+
+
+class SettingsTests(unittest.TestCase):
+    def test_round_trip_config_is_hash_bound(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            drive = root / "drivemedic.exe"
+            net = root / "netmedic.exe"
+            drive.write_bytes(b"drive")
+            net.write_bytes(b"net")
+
+            written = write_engine_config(
+                home=root / "home",
+                drivemedic=str(drive),
+                netmedic=str(net),
+            )
+            loaded = load_engine_config(root / "home")
+            self.assertEqual(loaded["status"], "CONFIGURED")
+            self.assertEqual(loaded["drivemedic"], str(drive.resolve()))
+            self.assertEqual(loaded["netmedic"], str(net.resolve()))
+            self.assertEqual(
+                Path(written["path"]),
+                engine_config_path(root / "home"),
+            )
+
+    def test_tampered_config_is_not_used(self):
+        with tempfile.TemporaryDirectory() as td:
+            home = Path(td)
+            target = engine_config_path(home)
+            target.parent.mkdir(parents=True)
+            target.write_text(
+                json.dumps({
+                    "schema": "field-medic-engine-config-v1",
+                    "updated_at": "2026-10-07T00:00:00Z",
+                    "drivemedic": "C:/tampered.exe",
+                    "netmedic": None,
+                    "config_sha256": "0" * 64,
+                }),
+                encoding="utf-8",
+            )
+            loaded = load_engine_config(home)
+            self.assertEqual(loaded["status"], "INVALID")
+            self.assertIsNone(loaded["drivemedic"])
+
+    def test_missing_binary_is_rejected_at_write(self):
+        with tempfile.TemporaryDirectory() as td:
+            with self.assertRaises(ValueError):
+                write_engine_config(
+                    home=Path(td),
+                    drivemedic=str(Path(td) / "missing.exe"),
+                )
+
+
+if __name__ == "__main__":
+    unittest.main()
