@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fieldmedic.local/schema/field-medic-action-v1.schema.json",
+  "title": "Field Medic Action Proposal v1",
+  "type": "object",
+  "required": [
+    "action_id",
+    "case_id",
+    "proposed_at",
+    "action_type",
+    "description",
+    "requested_authority",
+    "reversible",
+    "evidence_ids",
+    "status"
+  ],
+  "properties": {
+    "action_id": {"type": "string"},
+    "case_id": {"type": "string"},
+    "proposed_at": {"type": "string"},
+    "action_type": {"type": "string"},
+    "description": {"type": "string"},
+    "requested_authority": {"enum": ["observe", "infer", "propose", "execute"]},
+    "reversible": {"type": "boolean"},
+    "evidence_ids": {"type": "array", "items": {"type": "string"}},
+    "status": {"enum": ["PROPOSED_NOT_AUTHORIZED", "AUTHORIZED", "EXECUTED", "VERIFIED", "REJECTED"]}
+  },
+  "additionalProperties": false
+}
