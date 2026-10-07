@@ -1,4 +1,4 @@
-# Field Medic v0.1.0 Bootstrap
+# Field Medic v0.2.0
 
 **Field Medic** is the orchestration layer above two independent diagnostic engines:
 
@@ -68,7 +68,7 @@ FIELDMEDIC_HOME=...
                   hook            hook           hook
 ```
 
-See `docs/ARCHITECTURE.md`, `docs/GOVERNANCE.md`, and `docs/ROADMAP.md`.
+See `docs/ARCHITECTURE.md`, `docs/GOVERNANCE.md`, `docs/CORRELATION.md`, and `docs/ROADMAP.md`.\n\n## Native correlation\n\nRung 1 adds deterministic timestamp normalization, a cross-source evidence/event graph, bounded co-occurrence windows, diagnostic-tension detection, same-subject contradiction detection, and a temporal-association score that is explicitly **not** probability or causal confidence. Correlation receipts always retain `causal_claim=false`.
 
 ## Free and open source
 
