@@ -23,6 +23,16 @@ from .nbg_memory import (
     derive_verified_outcome,
 )
 from .orchestrator import AgentMedic
+from .repair_executors import get_executor, list_repair_actions
+from .repair_governance import (
+    create_repair_grant,
+    load_json as load_repair_json,
+    load_proposal as load_repair_proposal,
+    prepare_repair,
+    propose_repair,
+    save_json as save_repair_json,
+)
+from .repair_runner import RepairRunner
 from .router import route
 from .specialists import list_specialists
 
@@ -51,16 +61,20 @@ def _load_case(case_id: str) -> dict:
     return value
 
 
-def _controls(values: list[str] | None) -> dict[str, str]:
+def _key_values(values: list[str] | None, *, flag: str) -> dict[str, str]:
     result: dict[str, str] = {}
     for value in values or []:
         if "=" not in value:
-            raise SystemExit(f"--control requires KEY=VALUE, got: {value}")
+            raise SystemExit(f"{flag} requires KEY=VALUE, got: {value}")
         key, item = value.split("=", 1)
         if not key.strip():
-            raise SystemExit("--control key may not be empty")
+            raise SystemExit(f"{flag} key may not be empty")
         result[key.strip()] = item
     return result
+
+
+def _controls(values: list[str] | None) -> dict[str, str]:
+    return _key_values(values, flag="--control")
 
 
 def main(argv=None) -> int:
@@ -161,6 +175,68 @@ def main(argv=None) -> int:
     mq.add_argument("--limit", type=int, default=5)
 
     sub.add_parser("memory-stats", help="summarize the local NBG diagnostic store")
+
+    sub.add_parser(
+        "repair-actions",
+        help="list the fixed registry of executable bounded repairs",
+    )
+
+    rp = sub.add_parser(
+        "repair-propose",
+        help="create a typed repair proposal from an evidence-backed case",
+    )
+    rp.add_argument("case_id")
+    rp.add_argument(
+        "--action",
+        required=True,
+        choices=[item["action_key"] for item in list_repair_actions()],
+    )
+    rp.add_argument("--param", action="append", required=True)
+    rp.add_argument("--output")
+
+    rprep = sub.add_parser(
+        "repair-prepare",
+        help="capture target pre-state and exact rollback state",
+    )
+    rprep.add_argument("proposal")
+    rprep.add_argument("--ttl-minutes", type=int, default=10)
+    rprep.add_argument("--output")
+
+    rauth = sub.add_parser(
+        "repair-authorize",
+        help="bind explicit operator authority to one proposal + preflight",
+    )
+    rauth.add_argument("proposal")
+    rauth.add_argument("preflight")
+    rauth.add_argument("--operator", required=True)
+    rauth.add_argument("--ttl-minutes", type=int, default=15)
+    rauth.add_argument("--output")
+
+    rexec = sub.add_parser(
+        "repair-execute",
+        help="execute one exact bounded repair transaction",
+    )
+    rexec.add_argument("proposal")
+    rexec.add_argument("preflight")
+    rexec.add_argument("grant")
+    rexec.add_argument("--drivemedic", default=os.environ.get("DRIVEMEDIC_BIN"))
+    rexec.add_argument("--netmedic", default=os.environ.get("NETMEDIC_BIN"))
+
+    rverify = sub.add_parser(
+        "repair-verify",
+        help="capture independent post-action outcome measurements",
+    )
+    rverify.add_argument("execution")
+    rverify.add_argument("--drivemedic", default=os.environ.get("DRIVEMEDIC_BIN"))
+    rverify.add_argument("--netmedic", default=os.environ.get("NETMEDIC_BIN"))
+
+    rrollback = sub.add_parser(
+        "repair-rollback",
+        help="restore the exact captured pre-repair target state",
+    )
+    rrollback.add_argument("execution")
+    rrollback.add_argument("--drivemedic", default=os.environ.get("DRIVEMEDIC_BIN"))
+    rrollback.add_argument("--netmedic", default=os.environ.get("NETMEDIC_BIN"))
 
     args = p.parse_args(argv)
     agent = AgentMedic(_home(), brainc_binary=args.brainc)
@@ -266,6 +342,82 @@ def main(argv=None) -> int:
         )
     elif args.cmd == "memory-stats":
         result = _memory_store().stats()
+    elif args.cmd == "repair-actions":
+        result = {"actions": list_repair_actions()}
+    elif args.cmd == "repair-propose":
+        case = _load_case(args.case_id)
+        proposal = propose_repair(
+            case,
+            action_key=args.action,
+            params=_key_values(args.param, flag="--param"),
+        )
+        output = (
+            Path(args.output)
+            if args.output
+            else _case_dir(args.case_id)
+            / "repairs"
+            / proposal.proposal_id
+            / "proposal.json"
+        )
+        save_repair_json(output, proposal.to_dict())
+        result = {
+            "proposal": proposal.to_dict(),
+            "proposal_sha256": proposal.sha256,
+            "path": str(output),
+            "status": "PROPOSED_NOT_AUTHORIZED",
+        }
+    elif args.cmd == "repair-prepare":
+        proposal_path = Path(args.proposal)
+        proposal = load_repair_proposal(proposal_path)
+        preflight = prepare_repair(
+            proposal,
+            executor=get_executor(proposal.action_key),
+            ttl_minutes=args.ttl_minutes,
+        )
+        output = (
+            Path(args.output)
+            if args.output
+            else proposal_path.with_name("preflight.json")
+        )
+        save_repair_json(output, preflight)
+        result = {"preflight": preflight, "path": str(output)}
+    elif args.cmd == "repair-authorize":
+        proposal_path = Path(args.proposal)
+        proposal = load_repair_proposal(proposal_path)
+        preflight = load_repair_json(Path(args.preflight))
+        grant = create_repair_grant(
+            proposal,
+            preflight,
+            operator_label=args.operator,
+            ttl_minutes=args.ttl_minutes,
+        )
+        output = (
+            Path(args.output)
+            if args.output
+            else proposal_path.with_name("grant.json")
+        )
+        save_repair_json(output, grant)
+        result = {"grant": grant, "path": str(output)}
+    elif args.cmd in {"repair-execute", "repair-verify", "repair-rollback"}:
+        if not args.drivemedic or not args.netmedic:
+            raise SystemExit(
+                "--drivemedic/DRIVEMEDIC_BIN and --netmedic/NETMEDIC_BIN "
+                "are required for bounded repair verification"
+            )
+        runner = RepairRunner(
+            home=_home(),
+            drivemedic=args.drivemedic,
+            netmedic=args.netmedic,
+        )
+        if args.cmd == "repair-execute":
+            proposal = load_repair_proposal(Path(args.proposal))
+            preflight = load_repair_json(Path(args.preflight))
+            grant = load_repair_json(Path(args.grant))
+            result = runner.execute(proposal, preflight, grant)
+        elif args.cmd == "repair-verify":
+            result = runner.verify(load_repair_json(Path(args.execution)))
+        else:
+            result = runner.rollback(load_repair_json(Path(args.execution)))
     elif args.cmd == "experiment-propose":
         proposal = propose_experiment(
             case_id=args.case_id,
