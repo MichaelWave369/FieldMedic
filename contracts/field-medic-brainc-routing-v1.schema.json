@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fieldmedic.local/schema/field-medic-brainc-routing-v1.schema.json",
+  "title": "Field Medic BrainC Routing Response v1",
+  "type": "object",
+  "required": ["schema", "specialist_ids", "reasoning_tier", "escalate", "reasons"],
+  "properties": {
+    "schema": {"const": "field-medic-brainc-routing-response-v1"},
+    "specialist_ids": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "reasoning_tier": {"enum": ["deterministic", "utility", "specialist", "frontier"]},
+    "escalate": {"type": "boolean"},
+    "reasons": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": false
+}
