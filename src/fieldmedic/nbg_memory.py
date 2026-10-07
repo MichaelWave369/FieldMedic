@@ -9,9 +9,6 @@ import re
 import uuid
 from typing import Any, Iterable
 
-from .hashutil import sha256_json
-
-
 ORIGIN_WEIGHT = {
     "VERIFIED": 1.00,
     "OBSERVED": 0.85,
@@ -606,6 +603,29 @@ class DiagnosticMemoryStore:
             "transitions": len(self._read(self.transitions_path)),
             "admissions": len(self._read(self.admissions_path)),
         }
+
+
+def merge_specialist_hints(
+    current_ids: Iterable[str],
+    routing: dict[str, Any],
+    *,
+    known_ids: Iterable[str],
+    minimum_score: float = 0.15,
+) -> tuple[list[str], list[str]]:
+    known = set(known_ids)
+    merged = list(dict.fromkeys(current_ids))
+    added: list[str] = []
+    for item in routing.get("specialistHints", []):
+        specialist = item.get("specialistId")
+        score = float(item.get("score", 0))
+        if (
+            specialist in known
+            and specialist not in merged
+            and score >= minimum_score
+        ):
+            merged.append(specialist)
+            added.append(specialist)
+    return merged, added
 
 
 def verified_outcome_weight(outcome: str) -> float:
