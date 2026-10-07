@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fieldmedic.local/schema/field-medic-release-receipt-v1.schema.json",
+  "title": "Field Medic Release Receipt v1",
+  "type": "object",
+  "required": [
+    "schema", "fieldmedic_version", "generated_at", "runtime",
+    "fieldmedic_home", "engine_discovery", "registered_repair_actions",
+    "package_inventory", "package_inventory_sha256",
+    "release_gates", "receipt_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "field-medic-release-receipt-v1"},
+    "fieldmedic_version": {"type": "string"},
+    "receipt_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": true
+}
