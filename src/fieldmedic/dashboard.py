@@ -44,7 +44,11 @@ def build_dashboard_model(
     drivemedic: str | None = None,
     netmedic: str | None = None,
 ) -> dict[str, Any]:
-    discovery = discover_engines(drivemedic=drivemedic, netmedic=netmedic)
+    discovery = discover_engines(
+        drivemedic=drivemedic,
+        netmedic=netmedic,
+        home=home,
+    )
     memory = DiagnosticMemoryStore(home / "memory" / "nbg").stats()
     receipt = build_release_receipt(
         home=home,
