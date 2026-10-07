@@ -1,4 +1,4 @@
-# Field Medic v0.7.0-rc1
+# Field Medic v0.7.0-rc2
 
 **Field Medic** is the orchestration layer above two independent diagnostic engines:
 
@@ -235,6 +235,31 @@ The receipt inventories the installed FieldMedic Python package, probes DriveMed
 Stable release still requires live Windows repair qualification, the final DriveMedic lifecycle gate, NetMedic field promotion, Windows installer/uninstall packaging, licensing alignment, and final package hashes.
 
 See `docs/FIELD_SUPPLY_RC1.md`.
+
+## RC2 live Windows qualification
+
+RC2 adds the live qualification harness for the two bounded Windows repair executors. The harness uses the same Repair Gate, Windows backend, DriveMedic adapter, NetMedic adapter, verification path, and rollback path used by normal FieldMedic operation.
+
+It does **not** auto-select a network adapter. The operator must provide the exact interface index, address family, and temporary metric to test:
+
+~~~powershell
+.\scripts\qualify-windows-repairs.ps1 -InterfaceIndex 12 -AddressFamily IPv4 -TemporaryMetric 50 -Operator "local operator"
+~~~
+
+The process-priority test uses a disposable helper process spawned by FieldMedic itself. The interface-metric test uses the operator-selected adapter. Both tests must:
+
+- change the target state;
+- satisfy the typed postcondition;
+- capture DriveMedic and NetMedic post-action measurements;
+- reach the explicit verification state;
+- restore the exact captured pre-state;
+- emit execution, verification, and rollback evidence IDs.
+
+A successful run writes a hash-bound receipt under `FIELDMEDIC_HOME/qualification/windows-repair/`. The normal `release-receipt` command recognizes only a valid `PASS` receipt produced by the **current FieldMedic version**. Updating the executor code therefore invalidates older qualification automatically.
+
+A PASS qualifies this bounded apply/measure/rollback path on the recorded machine/environment. It does not claim every Windows machine, driver, interface, or workload is qualified.
+
+See `docs/WINDOWS_REPAIR_QUALIFICATION.md`.
 
 ## Free and open source
 
