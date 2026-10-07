@@ -43,6 +43,8 @@ def build_windows_bundle(
         (f"packages/{wheel.name}", _read(wheel)),
         ("install.ps1", _read(repository_root / "scripts" / "install-windows.ps1")),
         ("uninstall.ps1", _read(repository_root / "scripts" / "uninstall-windows.ps1")),
+        ("smoke-windows-install.ps1", _read(repository_root / "scripts" / "smoke-windows-install.ps1")),
+        ("write-install-smoke-receipt.py", _read(repository_root / "scripts" / "write-install-smoke-receipt.py")),
         ("README.txt", _read(repository_root / "docs" / "WINDOWS_INSTALL.txt")),
         ("LICENSE", _read(repository_root / "LICENSE")),
     ]
