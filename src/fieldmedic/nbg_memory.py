@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import json
+import math
 from pathlib import Path
 import re
 import uuid
@@ -44,12 +45,30 @@ def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
+def _js_stable(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {key: _js_stable(value[key]) for key in sorted(value)}
+    if isinstance(value, list):
+        return [_js_stable(item) for item in value]
+    if isinstance(value, tuple):
+        return [_js_stable(item) for item in value]
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            raise ValueError("non-finite numbers are not valid diagnostic memory")
+        if value == 0:
+            return 0
+        if value.is_integer():
+            return int(value)
+    return value
+
+
 def stable_json(value: Any) -> str:
     return json.dumps(
-        value,
+        _js_stable(value),
         ensure_ascii=False,
         sort_keys=True,
         separators=(",", ":"),
+        allow_nan=False,
     )
 
 
@@ -432,11 +451,14 @@ class DiagnosticMemoryStore:
     def records(self) -> list[dict[str, Any]]:
         return self._read(self.records_path)
 
-    def _record_by_id(self, memory_id: str) -> dict[str, Any] | None:
+    def get(self, memory_id: str) -> dict[str, Any] | None:
         for record in self.records():
             if record.get("memoryId") == memory_id:
                 return record
         return None
+
+    def _record_by_id(self, memory_id: str) -> dict[str, Any] | None:
+        return self.get(memory_id)
 
     def admit(
         self,
