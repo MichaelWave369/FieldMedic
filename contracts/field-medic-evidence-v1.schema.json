@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fieldmedic.local/schema/field-medic-evidence-v1.schema.json",
+  "title": "Field Medic Evidence Envelope v1",
+  "type": "object",
+  "required": ["schema", "evidence_id", "case_id", "source", "observed_at", "ingested_at", "category", "claim_class", "summary", "payload_sha256", "payload", "causal_claim", "authority", "provenance"],
+  "properties": {
+    "schema": {"const": "field-medic-evidence-v1"},
+    "evidence_id": {"type": "string", "minLength": 1},
+    "case_id": {"type": "string", "minLength": 1},
+    "source": {"enum": ["drivemedic", "netmedic", "agent-medic", "operator"]},
+    "source_version": {"type": ["string", "null"]},
+    "observed_at": {"type": "string"},
+    "ingested_at": {"type": "string"},
+    "category": {"type": "string"},
+    "claim_class": {"enum": ["observation", "inference", "recommendation", "verification", "governance"]},
+    "summary": {"type": "string"},
+    "payload_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "payload": {},
+    "confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+    "causal_claim": {"type": "boolean"},
+    "authority": {"enum": ["observe", "infer", "propose", "execute"]},
+    "provenance": {"type": "object"}
+  },
+  "additionalProperties": false
+}
