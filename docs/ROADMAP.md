@@ -61,11 +61,19 @@ The Rung 5 contract/transaction suite is CI-qualified with deterministic fake mu
 
 ## Rung 6 — Field Supply release
 
-- Windows installer / discovery
-- one dashboard for the suite
-- case export/import
-- release receipts
-- DriveMedic v1 lifecycle qualification completed
-- NetMedic Windows/field promotion gates completed
-- FieldMedic released under MIT
-- NetMedic release licensing aligned for free public use
+### RC1 product shell
+
+- [x] engine discovery and declared-interface probing
+- [x] one read-only dashboard for the suite
+- [x] hash-attested case export/import
+- [x] local release receipts with explicit unproven gates
+- [x] FieldMedic released under MIT
+
+### Stable promotion gates
+
+- [ ] Windows installer / uninstall / discovery handoff
+- [ ] live Windows qualification of bounded repair executors
+- [ ] DriveMedic v1 lifecycle qualification completed
+- [ ] NetMedic Windows/field promotion gates completed
+- [ ] NetMedic release licensing aligned for free public use
+- [ ] final package hashes and release receipt
