@@ -123,6 +123,7 @@ def main(argv=None) -> int:
     ir.add_argument("--wheel", required=True)
     ir.add_argument("--launcher", required=True)
     ir.add_argument("--dashboard-launcher", required=True)
+    ir.add_argument("--uninstaller", required=True)
     ir.add_argument("--path-added", action="store_true")
     ir.add_argument("--output")
 
@@ -343,6 +344,7 @@ def main(argv=None) -> int:
             wheel=Path(args.wheel),
             launcher=Path(args.launcher),
             dashboard_launcher=Path(args.dashboard_launcher),
+            uninstaller=Path(args.uninstaller),
             path_added=args.path_added,
         )
         result = {
