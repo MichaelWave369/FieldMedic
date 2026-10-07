@@ -45,10 +45,26 @@ def write_engine_config(
     home: Path | None = None,
     drivemedic: str | None = None,
     netmedic: str | None = None,
+    preserve_existing: bool = True,
 ) -> dict[str, Any]:
     root = home or default_home()
-    drive = _validate_optional_binary(drivemedic, name="DriveMedic")
-    net = _validate_optional_binary(netmedic, name="NetMedic")
+    existing = load_engine_config(root) if preserve_existing else {
+        "status": "NOT_CONFIGURED",
+        "drivemedic": None,
+        "netmedic": None,
+    }
+    drive_raw = (
+        drivemedic
+        if drivemedic is not None
+        else existing.get("drivemedic")
+    )
+    net_raw = (
+        netmedic
+        if netmedic is not None
+        else existing.get("netmedic")
+    )
+    drive = _validate_optional_binary(drive_raw, name="DriveMedic")
+    net = _validate_optional_binary(net_raw, name="NetMedic")
     body = {
         "schema": CONFIG_SCHEMA,
         "updated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
