@@ -5,7 +5,7 @@
   "type": "object",
   "required": [
     "schema", "fieldmedic_version", "installed_at", "platform",
-    "home", "install_root", "runtime_root", "wheel", "launchers",
+    "home", "install_root", "runtime_root", "wheel", "launchers", "uninstaller",
     "path_added", "engine_config", "engine_discovery",
     "data_preserved_on_default_uninstall", "receipt_sha256"
   ],
