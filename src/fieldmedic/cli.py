@@ -38,14 +38,13 @@ from .repair_governance import (
 from .repair_runner import RepairRunner
 from .release_receipt import build_release_receipt
 from .router import route
+from .settings import default_home, load_engine_config, write_engine_config
 from .specialists import list_specialists
 from .windows_qualification import run_windows_repair_qualification
 
 
 def _home() -> Path:
-    return Path(
-        os.environ.get("FIELDMEDIC_HOME", str(Path.home() / ".fieldmedic"))
-    ).expanduser()
+    return default_home()
 
 
 def _memory_store() -> DiagnosticMemoryStore:
@@ -105,6 +104,14 @@ def main(argv=None) -> int:
     disc = sub.add_parser("discover", help="discover and probe DriveMedic + NetMedic")
     disc.add_argument("--drivemedic", default=os.environ.get("DRIVEMEDIC_BIN"))
     disc.add_argument("--netmedic", default=os.environ.get("NETMEDIC_BIN"))
+
+    cfg = sub.add_parser(
+        "configure-engines",
+        help="store hash-bound local DriveMedic / NetMedic paths for discovery",
+    )
+    cfg.add_argument("--drivemedic")
+    cfg.add_argument("--netmedic")
+    sub.add_parser("engine-config", help="show local engine discovery handoff config")
 
     ce = sub.add_parser("case-export", help="export one portable hash-attested case bundle")
     ce.add_argument("case_id")
@@ -299,7 +306,16 @@ def main(argv=None) -> int:
         result = discover_engines(
             drivemedic=args.drivemedic,
             netmedic=args.netmedic,
+            home=_home(),
         )
+    elif args.cmd == "configure-engines":
+        result = write_engine_config(
+            home=_home(),
+            drivemedic=args.drivemedic,
+            netmedic=args.netmedic,
+        )
+    elif args.cmd == "engine-config":
+        result = load_engine_config(_home())
     elif args.cmd == "case-export":
         result = export_case(
             _case_dir(args.case_id),
