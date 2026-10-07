@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
 import hashlib
 import json
 from pathlib import Path
@@ -58,7 +57,7 @@ def build_windows_bundle(
     manifest_body = {
         "schema": BUNDLE_SCHEMA,
         "fieldmedic_version": __version__,
-        "generated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "build_time_policy": "deterministic-no-wall-clock",
         "files": files,
         "bundles_drivemedic": False,
         "bundles_netmedic": False,
