@@ -16,6 +16,7 @@ from .experiments import (
     propose_experiment,
     save_json,
 )
+from .installation import write_install_receipt
 from .ledger import EvidenceLedger
 from .local_models import discover_local_models
 from .models import ClaimClass, Source
@@ -112,6 +113,18 @@ def main(argv=None) -> int:
     cfg.add_argument("--drivemedic")
     cfg.add_argument("--netmedic")
     sub.add_parser("engine-config", help="show local engine discovery handoff config")
+
+    ir = sub.add_parser(
+        "installation-receipt",
+        help="write the current Windows installation handoff receipt",
+    )
+    ir.add_argument("--install-root", required=True)
+    ir.add_argument("--runtime-root", required=True)
+    ir.add_argument("--wheel", required=True)
+    ir.add_argument("--launcher", required=True)
+    ir.add_argument("--dashboard-launcher", required=True)
+    ir.add_argument("--path-added", action="store_true")
+    ir.add_argument("--output")
 
     ce = sub.add_parser("case-export", help="export one portable hash-attested case bundle")
     ce.add_argument("case_id")
@@ -316,6 +329,26 @@ def main(argv=None) -> int:
         )
     elif args.cmd == "engine-config":
         result = load_engine_config(_home())
+    elif args.cmd == "installation-receipt":
+        output = (
+            Path(args.output)
+            if args.output
+            else _home() / "installation" / "install.json"
+        )
+        receipt = write_install_receipt(
+            output,
+            home=_home(),
+            install_root=Path(args.install_root),
+            runtime_root=Path(args.runtime_root),
+            wheel=Path(args.wheel),
+            launcher=Path(args.launcher),
+            dashboard_launcher=Path(args.dashboard_launcher),
+            path_added=args.path_added,
+        )
+        result = {
+            "path": str(output),
+            "receipt": receipt,
+        }
     elif args.cmd == "case-export":
         result = export_case(
             _case_dir(args.case_id),
