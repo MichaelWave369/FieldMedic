@@ -4,7 +4,7 @@
   "title": "Field Medic Memory Routing v1",
   "type": "object",
   "required": [
-    "schema", "policy", "matches", "specialistHints",
+    "schema", "policy", "matches", "specialistHints", "routingLineageCount",
     "authorityCeiling", "causalClaim"
   ],
   "properties": {
@@ -12,6 +12,9 @@
     "policy": {"const": "deterministic-provenance-preserving-case-similarity"},
     "matches": {"type": "array"},
     "specialistHints": {"type": "array"},
+    "routingLineageCount": {"type": "integer", "minimum": 0},
+    "status": {"type": "string"},
+    "error": {"type": "string"},
     "authorityCeiling": {"const": "route-only"},
     "causalClaim": {"const": false}
   },
