@@ -14,7 +14,11 @@ class SettingsTests(unittest.TestCase):
     def test_default_home_preserves_legacy_location_without_override(self):
         from unittest.mock import patch
         from fieldmedic.settings import default_home
-        with patch.dict("os.environ", {}, clear=True):
+        with patch.dict(
+            "os.environ",
+            {"FIELDMEDIC_HOME": ""},
+            clear=False,
+        ):
             self.assertEqual(default_home(), Path.home() / ".fieldmedic")
 
     def test_round_trip_config_is_hash_bound(self):
