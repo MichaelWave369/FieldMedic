@@ -16,7 +16,11 @@ from .local_reasoner import ollama_synthesis, LocalReasoningError
 from .models import Source, ClaimClass, ActionProposal, Authority, utc_now
 from .policy import RealityGate
 from .router import route
-from .nbg_memory import DiagnosticMemoryStore, case_to_inferred_memory
+from .nbg_memory import (
+    DiagnosticMemoryStore,
+    case_to_inferred_memory,
+    merge_specialist_hints,
+)
 from .reasoning import plan_reasoning
 from .specialists import SPECIALISTS, plan_specialists, materialize_specialist_plan
 from .synthesis import build_synthesis
@@ -162,17 +166,12 @@ class AgentMedic:
                 domain=decision.domain,
                 specialist_ids=specialist_plan["specialist_ids"],
             )
-            memory_hints = [
-                item["specialistId"]
-                for item in memory_routing.get("specialistHints", [])
-                if item.get("score", 0) >= 0.15
-                and item.get("specialistId") in SPECIALISTS
-            ]
+            merged_ids, memory_hints = merge_specialist_hints(
+                specialist_plan["specialist_ids"],
+                memory_routing,
+                known_ids=SPECIALISTS,
+            )
             if memory_hints:
-                merged_ids = list(dict.fromkeys([
-                    *specialist_plan["specialist_ids"],
-                    *memory_hints,
-                ]))
                 specialist_plan = materialize_specialist_plan(
                     merged_ids,
                     reasons=[
