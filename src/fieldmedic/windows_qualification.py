@@ -414,8 +414,4 @@ def run_windows_repair_qualification(
     timestamped = root / f"{qualification_id}.json"
     save_json(timestamped, receipt)
     save_json(root / "latest.json", receipt)
-    return {
-        **receipt,
-        "receipt_path": str(timestamped),
-        "latest_path": str(root / "latest.json"),
-    }
+    return receipt
