@@ -1,4 +1,4 @@
-# Field Medic v0.4.0
+# Field Medic v0.5.0
 
 **Field Medic** is the orchestration layer above two independent diagnostic engines:
 
@@ -125,6 +125,37 @@ fieldmedic experiment-freeze fieldmedic-experiment-proposal.json fieldmedic-expe
 Capture approval is intentionally separate and should be created only when the physical arm and locked controls are actually confirmed.
 
 See `docs/GOVERNED_EXPERIMENTS.md`.
+
+## NBG diagnostic memory
+
+Rung 4 turns completed cases into governed, model-independent diagnostic memory using the live NBG epistemic envelope.
+
+New cases remain `INFERRED` candidates until explicitly admitted:
+
+~~~text
+fieldmedic memory-admit CASE_ID --operator "local operator"
+~~~
+
+A verified outcome derives a new `VERIFIED` descendant rather than rewriting the original memory:
+
+~~~text
+fieldmedic memory-verify CASE_ID --operator "local operator" --outcome VERIFIED_FAILURE --details "rollback did not help"
+~~~
+
+Verified success, failure and no-effect outcomes carry equal epistemic routing weight. Negative cases are retained instead of being quietly selected out because they were inconvenient.
+
+Prior cases influence routing through deterministic symptom/domain/specialist similarity. They may add specialist hints, but never remove specialists required by current evidence. One root NBG lineage contributes at most one routing vote, so derivation and repetition cannot manufacture extra evidence.
+
+Inspect memory without invoking a model:
+
+~~~text
+fieldmedic memory-query "wifi disconnects while Windows freezes" --domain mixed --specialist network.wifi
+fieldmedic memory-stats
+~~~
+
+Every match preserves its memory ID, record fingerprint, origin, outcome, evidence, lineage and score components. Memory similarity is not causation, verification, or action authority.
+
+See `docs/NBG_DIAGNOSTIC_MEMORY.md`.
 
 ## Free and open source
 
