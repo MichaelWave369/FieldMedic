@@ -43,6 +43,7 @@ def build_release_receipt(
     discovery = discover_engines(
         drivemedic=drivemedic,
         netmedic=netmedic,
+        home=home,
     )
     inventory = package_inventory()
     windows_repair_gate = qualification_gate_from_home(home)
