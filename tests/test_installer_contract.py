@@ -12,6 +12,11 @@ class InstallerContractTests(unittest.TestCase):
             self.root / "scripts" / "uninstall-windows.ps1"
         ).read_text(encoding="utf-8")
 
+    def test_installer_verifies_bundle_members_before_runtime_creation(self):
+        self.assertIn("manifest.json", self.install)
+        self.assertIn("Get-FileHash -Algorithm SHA256", self.install)
+        self.assertIn("Bundle SHA-256 mismatch", self.install)
+
     def test_installer_does_not_require_admin_or_install_engines(self):
         lower = self.install.lower()
         self.assertNotIn("runas", lower)
