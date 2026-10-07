@@ -41,6 +41,7 @@ from .release_receipt import build_release_receipt
 from .router import route
 from .settings import default_home, load_engine_config, write_engine_config
 from .specialists import list_specialists
+from .windows_bundle import build_windows_bundle
 from .windows_qualification import run_windows_repair_qualification
 
 
@@ -126,6 +127,14 @@ def main(argv=None) -> int:
     ir.add_argument("--uninstaller", required=True)
     ir.add_argument("--path-added", action="store_true")
     ir.add_argument("--output")
+
+    wb = sub.add_parser(
+        "build-windows-bundle",
+        help="build a deterministic FieldMedic-only Windows release bundle",
+    )
+    wb.add_argument("--wheel", required=True)
+    wb.add_argument("--repository-root", default=".")
+    wb.add_argument("--output", required=True)
 
     ce = sub.add_parser("case-export", help="export one portable hash-attested case bundle")
     ce.add_argument("case_id")
@@ -351,6 +360,12 @@ def main(argv=None) -> int:
             "path": str(output),
             "receipt": receipt,
         }
+    elif args.cmd == "build-windows-bundle":
+        result = build_windows_bundle(
+            wheel=Path(args.wheel),
+            repository_root=Path(args.repository_root),
+            output=Path(args.output),
+        )
     elif args.cmd == "case-export":
         result = export_case(
             _case_dir(args.case_id),
