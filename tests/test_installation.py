@@ -35,6 +35,7 @@ def receipt(version=__version__):
             "fieldmedic": "C:/Users/test/AppData/Local/Programs/FieldMedic/bin/fieldmedic.cmd",
             "dashboard": "C:/Users/test/AppData/Local/Programs/FieldMedic/bin/fieldmedic-dashboard.cmd",
         },
+        "uninstaller": "C:/Users/test/AppData/Local/Programs/FieldMedic/uninstall.ps1",
         "path_added": False,
         "engine_config": {"status": "CONFIGURED"},
         "engine_discovery": {"ready_for_diagnostics": True},
