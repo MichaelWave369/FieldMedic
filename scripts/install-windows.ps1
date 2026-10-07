@@ -47,6 +47,13 @@ New-Item -ItemType Directory -Force -Path $runtimeRoot | Out-Null
 New-Item -ItemType Directory -Force -Path $binRoot | Out-Null
 New-Item -ItemType Directory -Force -Path $DataRoot | Out-Null
 
+$pathAdded = $false
+$oldLauncher = if (Test-Path $launcher) { Get-Content -Raw $launcher } else { $null }
+$oldDashboardLauncher = if (Test-Path $dashboardLauncher) { Get-Content -Raw $dashboardLauncher } else { $null }
+$oldUninstaller = if (Test-Path $uninstaller) { Get-Content -Raw $uninstaller } else { $null }
+$configPath = Join-Path $DataRoot 'config\engines.json'
+$oldConfig = if (Test-Path $configPath) { Get-Content -Raw $configPath } else { $null }
+
 try {
   & $python.Exe @($python.Args) -m venv $runtimeRoot
   if ($LASTEXITCODE -ne 0) { throw 'Failed to create FieldMedic runtime.' }
@@ -88,7 +95,6 @@ start "" "$dashboardPath"
 
   Copy-Item -Force (Join-Path $bundleRoot 'uninstall.ps1') $uninstaller
 
-  $pathAdded = $false
   if ($AddToPath) {
     $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
     $parts = @($userPath -split ';' | Where-Object { $_ -and $_.Trim() })
