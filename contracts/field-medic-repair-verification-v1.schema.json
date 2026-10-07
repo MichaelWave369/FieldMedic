@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fieldmedic.local/schema/field-medic-repair-verification-v1.schema.json",
+  "title": "Field Medic Repair Verification v1",
+  "type": "object",
+  "required": [
+    "schema", "case_id", "proposal_id", "action_key",
+    "execution_evidence_id", "target_state_present", "target_state",
+    "target_state_sha256", "engine_measurements", "status",
+    "outcome_claim", "operator_outcome_required", "causal_claim",
+    "verification_evidence_id"
+  ],
+  "properties": {
+    "schema": {"const": "field-medic-repair-verification-v1"},
+    "target_state_present": {"type": "boolean"},
+    "status": {
+      "enum": ["MEASURED_PENDING_OPERATOR_OUTCOME", "TARGET_STATE_DRIFTED"]
+    },
+    "outcome_claim": {"const": "UNCLASSIFIED"},
+    "operator_outcome_required": {"const": true},
+    "causal_claim": {"const": false}
+  },
+  "additionalProperties": true
+}
