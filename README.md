@@ -1,4 +1,4 @@
-# Field Medic v0.6.0
+# Field Medic v0.7.0-rc1
 
 **Field Medic** is the orchestration layer above two independent diagnostic engines:
 
@@ -198,6 +198,43 @@ A successful mutation is **not** called a fix. It remains `EXECUTED_PENDING_OUTC
 CI qualifies the governance/state-machine behavior with deterministic fake mutation backends. Live Windows mutation qualification remains a stable-release gate.
 
 See `docs/BOUNDED_REPAIRS.md`.
+
+## Field Supply RC1 product shell
+
+Rung 6 RC1 adds the product shell around the governed core without pretending the remaining stable-release gates are already proven.
+
+Discover installed engines through their declared interfaces:
+
+~~~text
+fieldmedic discover
+~~~
+
+Create one dependency-free read-only operator dashboard:
+
+~~~text
+fieldmedic dashboard --output fieldmedic-dashboard.html
+~~~
+
+Move a complete local case without dropping its evidence/repair/experiment artifacts:
+
+~~~text
+fieldmedic case-export CASE_ID case.fieldmedic.zip
+fieldmedic case-import case.fieldmedic.zip
+~~~
+
+Case bundles are SHA-256 manifested, reject traversal and oversized expansion, use portable case IDs, and never overwrite an existing local case.
+
+Generate a product/release receipt:
+
+~~~text
+fieldmedic release-receipt --output fieldmedic-release-receipt.json
+~~~
+
+The receipt inventories the installed FieldMedic Python package, probes DriveMedic and NetMedic, records the bounded repair registry, and serializes unproven stable gates explicitly instead of converting discovery into qualification by wishful thinking.
+
+Stable release still requires live Windows repair qualification, the final DriveMedic lifecycle gate, NetMedic field promotion, Windows installer/uninstall packaging, licensing alignment, and final package hashes.
+
+See `docs/FIELD_SUPPLY_RC1.md`.
 
 ## Free and open source
 
