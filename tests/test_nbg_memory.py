@@ -62,6 +62,13 @@ class NBGMemoryTests(unittest.TestCase):
     def test_stable_json_matches_javascript_integer_float_semantics(self):
         self.assertEqual(stable_json({"x": 1.0, "zero": -0.0}), '{"x":1,"zero":0}')
 
+    def test_object_fingerprint_matches_nbg_javascript_vector(self):
+        from fieldmedic.nbg_memory import nbg_fingerprint
+        self.assertEqual(
+            nbg_fingerprint({"x": 1.0, "zero": -0.0, "origin": "INFERRED", "tags": ["a", "b"]}),
+            "fnv1a32:e0563c5d",
+        )
+
     def test_memory_hints_only_add_known_specialists_and_never_remove_current(self):
         merged, added = merge_specialist_hints(
             ["host.windows"],
