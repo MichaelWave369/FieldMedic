@@ -88,8 +88,17 @@ def build_synthesis(
 
 
 def validate_synthesis(receipt: dict[str, Any], *, available_evidence_ids: set[str]) -> None:
+    required = {
+        "schema", "case_id", "symptom", "domain", "summary", "claims",
+        "specialist_ids", "reasoning", "uncertainties", "causal_claim", "authority_ceiling",
+    }
+    missing = sorted(required - set(receipt))
+    if missing:
+        raise SynthesisValidationError(f"synthesis is missing required fields: {missing}")
     if receipt.get("schema") != "field-medic-synthesis-v1":
         raise SynthesisValidationError("unexpected synthesis schema")
+    if receipt.get("authority_ceiling") != "infer":
+        raise SynthesisValidationError("synthesis authority ceiling must remain infer")
     if receipt.get("causal_claim") is not False:
         raise SynthesisValidationError("synthesis receipt must keep causal_claim=false")
     claims = receipt.get("claims")
