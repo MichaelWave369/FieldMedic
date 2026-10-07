@@ -19,7 +19,8 @@ function Resolve-Python311 {
   )
   foreach ($candidate in $candidates) {
     try {
-      & $candidate.Exe @($candidate.Args) -c "import sys; raise SystemExit(0 if sys.version_info >= (3,11) else 1)" *> $null
+      $candidateArgs = @($candidate.Args)
+      & $candidate.Exe @candidateArgs -c "import sys; raise SystemExit(0 if sys.version_info >= (3,11) else 1)" *> $null
       if ($LASTEXITCODE -eq 0) { return $candidate }
     } catch { }
   }
@@ -27,6 +28,23 @@ function Resolve-Python311 {
 }
 
 $bundleRoot = $PSScriptRoot
+$manifestPath = Join-Path $bundleRoot 'manifest.json'
+if (-not (Test-Path $manifestPath)) { throw 'Bundle manifest.json is missing.' }
+$manifest = Get-Content -Raw $manifestPath | ConvertFrom-Json
+if ($manifest.schema -ne 'field-medic-windows-bundle-v1') { throw 'Unsupported FieldMedic bundle manifest schema.' }
+$bundleFull = [IO.Path]::GetFullPath($bundleRoot).TrimEnd('\') + '\'
+foreach ($entry in $manifest.files) {
+  $candidatePath = [IO.Path]::GetFullPath((Join-Path $bundleRoot ([string]$entry.path)))
+  if (-not $candidatePath.StartsWith($bundleFull, [StringComparison]::OrdinalIgnoreCase)) {
+    throw "Unsafe bundle manifest path: $($entry.path)"
+  }
+  if (-not (Test-Path $candidatePath -PathType Leaf)) { throw "Bundle file missing: $($entry.path)" }
+  $item = Get-Item $candidatePath
+  if ([long]$item.Length -ne [long]$entry.size_bytes) { throw "Bundle size mismatch: $($entry.path)" }
+  $actualHash = (Get-FileHash -Algorithm SHA256 $candidatePath).Hash.ToLowerInvariant()
+  if ($actualHash -ne ([string]$entry.sha256).ToLowerInvariant()) { throw "Bundle SHA-256 mismatch: $($entry.path)" }
+}
+
 $wheels = @(Get-ChildItem -Path (Join-Path $bundleRoot 'packages') -Filter 'fieldmedic-*.whl' -File)
 if ($wheels.Count -ne 1) { throw "Expected exactly one FieldMedic wheel in packages\; found $($wheels.Count)." }
 $wheel = $wheels[0]
@@ -55,7 +73,8 @@ $configPath = Join-Path $DataRoot 'config\engines.json'
 $oldConfig = if (Test-Path $configPath) { Get-Content -Raw $configPath } else { $null }
 
 try {
-  & $python.Exe @($python.Args) -m venv $runtimeRoot
+  $pythonArgs = @($python.Args)
+  & $python.Exe @pythonArgs -m venv $runtimeRoot
   if ($LASTEXITCODE -ne 0) { throw 'Failed to create FieldMedic runtime.' }
 
   $runtimePython = Join-Path $runtimeRoot 'Scripts\python.exe'
