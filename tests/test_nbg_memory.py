@@ -8,6 +8,8 @@ from fieldmedic.nbg_memory import (
     derive_verified_outcome,
     fnv1a32,
     memory_reliability,
+    merge_specialist_hints,
+    stable_json,
     verified_outcome_weight,
 )
 
@@ -56,6 +58,27 @@ def sample_case(case_id="case-1", symptom="wifi disconnects while Windows freeze
 class NBGMemoryTests(unittest.TestCase):
     def test_fingerprint_matches_standard_ascii_fnv1a_vector(self):
         self.assertEqual(fnv1a32("hello"), "fnv1a32:4f9f2cab")
+
+    def test_stable_json_matches_javascript_integer_float_semantics(self):
+        self.assertEqual(stable_json({"x": 1.0, "zero": -0.0}), '{"x":1,"zero":0}')
+
+    def test_memory_hints_only_add_known_specialists_and_never_remove_current(self):
+        merged, added = merge_specialist_hints(
+            ["host.windows"],
+            {
+                "specialistHints": [
+                    {"specialistId": "network.wifi", "score": 0.8},
+                    {"specialistId": "root.shell", "score": 999},
+                    {"specialistId": "host.storage", "score": 0.01},
+                ]
+            },
+            known_ids={"host.windows", "network.wifi", "host.storage"},
+        )
+        self.assertEqual(merged[0], "host.windows")
+        self.assertIn("network.wifi", merged)
+        self.assertNotIn("root.shell", merged)
+        self.assertNotIn("host.storage", merged)
+        self.assertEqual(added, ["network.wifi"])
 
     def test_case_candidate_is_nbg_epistemic_inferred_and_non_authorizing(self):
         memory = case_to_inferred_memory(sample_case())
