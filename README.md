@@ -1,4 +1,4 @@
-# Field Medic v0.7.0-rc3
+# Field Medic v0.7.0-rc4
 
 **Field Medic** is the orchestration layer above two independent diagnostic engines:
 
@@ -295,6 +295,38 @@ Deleting data requires both `-RemoveData` and `-ConfirmDataRemoval`.
 A successful install creates a current-version install receipt. `fieldmedic release-receipt` admits the Windows install gate only from a valid local receipt; merely having installer scripts in the repository is not treated as proof that this machine was installed through them.
 
 See `docs/WINDOWS_INSTALL.txt`.
+
+## RC4 stable-promotion evidence packet
+
+RC4 turns the remaining stable-release checklist into explicit, version-bound evidence gates.
+
+A stable packaging candidate requires:
+
+1. a real Windows install/default-uninstall smoke receipt;
+2. a real Windows bounded-repair qualification receipt;
+3. imported DriveMedic lifecycle qualification evidence;
+4. imported NetMedic Windows/field promotion evidence;
+5. imported NetMedic public-license evidence.
+
+Evaluate the packet:
+
+~~~text
+fieldmedic promotion-candidate --output fieldmedic-stable-promotion.json
+~~~
+
+The command remains `BLOCKED` until all five gates are valid. A ready packet reports `READY_FOR_STABLE_PACKAGING`; that means final packaging may proceed, not that FieldMedic independently recreated every external test.
+
+The Windows bundle now contains its own installer smoke runner:
+
+~~~powershell
+.\smoke-windows-install.ps1 -Bundle .\FieldMedic-Windows.zip
+~~~
+
+External engine evidence is copied byte-for-byte into the local qualification store and SHA-256 bound to the currently discovered engine version. Operator PASS declarations remain explicit provenance, not hidden inference.
+
+NetMedic license promotion additionally requires a recognized open-source SPDX family, explicit redistribution permission, and imported license text consistent with that declared family.
+
+See `docs/STABLE_PROMOTION.md`.
 
 ## Free and open source
 
