@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fieldmedic.local/schema/field-medic-stable-promotion-candidate-v1.schema.json",
+  "title": "Field Medic Stable Promotion Candidate v1",
+  "type": "object",
+  "required": [
+    "schema", "fieldmedic_version", "generated_at", "status",
+    "engine_discovery", "gates", "blocking_gates",
+    "claim_boundary", "candidate_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "field-medic-stable-promotion-candidate-v1"},
+    "status": {
+      "enum": ["BLOCKED", "READY_FOR_STABLE_PACKAGING"]
+    },
+    "candidate_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "additionalProperties": true
+}
