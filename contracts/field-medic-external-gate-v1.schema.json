@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fieldmedic.local/schema/field-medic-external-gate-v1.schema.json",
+  "title": "Field Medic External Gate v1",
+  "type": "object",
+  "required": [
+    "schema", "kind", "engine", "engine_version", "claim",
+    "declared_status", "operator_label", "operator_label_semantics",
+    "imported_at", "source_artifact", "license", "claim_boundary",
+    "record_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "field-medic-external-gate-v1"},
+    "kind": {
+      "enum": [
+        "drivemedic-lifecycle",
+        "netmedic-field",
+        "netmedic-license"
+      ]
+    },
+    "declared_status": {"const": "PASS"},
+    "record_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "additionalProperties": true
+}
