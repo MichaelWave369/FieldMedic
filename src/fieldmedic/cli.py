@@ -16,7 +16,9 @@ from .experiments import (
     propose_experiment,
     save_json,
 )
+from .external_gates import GATE_SPECS, import_external_gate
 from .installation import write_install_receipt
+from .install_smoke import write_install_smoke_receipt
 from .ledger import EvidenceLedger
 from .local_models import discover_local_models
 from .models import ClaimClass, Source
@@ -27,6 +29,7 @@ from .nbg_memory import (
     derive_verified_outcome,
 )
 from .orchestrator import AgentMedic
+from .promotion import write_promotion_candidate
 from .repair_executors import get_executor, list_repair_actions
 from .repair_governance import (
     create_repair_grant,
@@ -167,6 +170,39 @@ def main(argv=None) -> int:
     wq.add_argument("--operator", required=True)
     wq.add_argument("--drivemedic", default=os.environ.get("DRIVEMEDIC_BIN"))
     wq.add_argument("--netmedic", default=os.environ.get("NETMEDIC_BIN"))
+
+    sg = sub.add_parser(
+        "import-promotion-evidence",
+        help="import and hash external release-gate evidence",
+    )
+    sg.add_argument("kind", choices=sorted(GATE_SPECS))
+    sg.add_argument("source_receipt")
+    sg.add_argument("--operator", required=True)
+    sg.add_argument("--declare-pass", action="store_true")
+    sg.add_argument("--license-id")
+    sg.add_argument("--redistribution-allowed", action="store_true")
+
+    pc = sub.add_parser(
+        "promotion-candidate",
+        help="evaluate all stable-promotion evidence gates",
+    )
+    pc.add_argument("--output", default="fieldmedic-stable-promotion.json")
+
+    sr = sub.add_parser(
+        "install-smoke-receipt",
+        help="write one Windows install/default-uninstall smoke receipt",
+    )
+    sr.add_argument("--bundle", required=True)
+    sr.add_argument("--install-root", required=True)
+    sr.add_argument("--data-root", required=True)
+    sr.add_argument("--install-receipt-sha256", required=True)
+    sr.add_argument("--discover-pass", action="store_true")
+    sr.add_argument("--dashboard-pass", action="store_true")
+    sr.add_argument("--release-receipt-pass", action="store_true")
+    sr.add_argument("--default-uninstall-pass", action="store_true")
+    sr.add_argument("--data-preserved", action="store_true")
+    sr.add_argument("--sentinel-preserved", action="store_true")
+    sr.add_argument("--output")
 
     d = sub.add_parser("doctor", help="open a governed diagnostic case")
     d.add_argument("symptom")
@@ -408,6 +444,45 @@ def main(argv=None) -> int:
             address_family=args.address_family,
             temporary_metric=args.temporary_metric,
             operator_label=args.operator,
+        )
+        if result.get("status") != "PASS":
+            exit_code = 2
+    elif args.cmd == "import-promotion-evidence":
+        result = import_external_gate(
+            home=_home(),
+            kind=args.kind,
+            source_receipt=Path(args.source_receipt),
+            operator_label=args.operator,
+            declared_pass=args.declare_pass,
+            license_id=args.license_id,
+            redistribution_allowed=args.redistribution_allowed,
+        )
+    elif args.cmd == "promotion-candidate":
+        output = Path(args.output)
+        result = write_promotion_candidate(_home(), output)
+        if result.get("status") != "READY_FOR_STABLE_PACKAGING":
+            exit_code = 3
+    elif args.cmd == "install-smoke-receipt":
+        output = (
+            Path(args.output)
+            if args.output
+            else _home()
+            / "qualification"
+            / "windows-install-smoke"
+            / "latest.json"
+        )
+        result = write_install_smoke_receipt(
+            output=output,
+            bundle=Path(args.bundle),
+            install_root=Path(args.install_root),
+            data_root=Path(args.data_root),
+            install_receipt_sha256=args.install_receipt_sha256,
+            discover_pass=args.discover_pass,
+            dashboard_pass=args.dashboard_pass,
+            release_receipt_pass=args.release_receipt_pass,
+            default_uninstall_pass=args.default_uninstall_pass,
+            data_preserved=args.data_preserved,
+            sentinel_preserved=args.sentinel_preserved,
         )
         if result.get("status") != "PASS":
             exit_code = 2

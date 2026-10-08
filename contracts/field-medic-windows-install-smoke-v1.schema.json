@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fieldmedic.local/schema/field-medic-windows-install-smoke-v1.schema.json",
+  "title": "Field Medic Windows Install Smoke v1",
+  "type": "object",
+  "required": [
+    "schema", "fieldmedic_version", "generated_at", "status",
+    "platform", "bundle", "install_root", "data_root",
+    "install_receipt_sha256", "checks", "claim_boundary",
+    "receipt_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "field-medic-windows-install-smoke-v1"},
+    "status": {"enum": ["PASS", "FAIL"]},
+    "receipt_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "additionalProperties": true
+}

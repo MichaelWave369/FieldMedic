@@ -91,9 +91,21 @@ The Rung 5 contract/transaction suite is CI-qualified with deterministic fake mu
 - [x] destructive data removal requires double confirmation
 - [x] partial install rolls back runtime / config / launchers / PATH changes
 
+### RC4 stable-promotion evidence packet
+
+- [x] real install/default-uninstall smoke harness
+- [x] install smoke current-version receipt gate
+- [x] DriveMedic lifecycle evidence import
+- [x] NetMedic field-promotion evidence import
+- [x] NetMedic public-license evidence import
+- [x] imported artifact byte preservation + SHA-256
+- [x] external evidence bound to current discovered engine versions
+- [x] license artifact text checked against declared SPDX family
+- [x] one stable-promotion candidate evaluator
+
 ### Stable promotion gates
 
-- [ ] run RC3 installer + default uninstall smoke on a real Windows workstation
+- [ ] run RC4 install/default-uninstall smoke on a real Windows workstation
 - [ ] run RC2 harness successfully on a real elevated Windows workstation
 - [ ] DriveMedic v1 lifecycle qualification completed
 - [ ] NetMedic Windows/field promotion gates completed

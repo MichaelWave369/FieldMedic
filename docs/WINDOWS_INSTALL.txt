@@ -34,3 +34,13 @@ To remove local data too, both destructive flags are required:
 
 The installer never installs, updates, modifies, or relicenses DriveMedic or NetMedic.
 Engine configuration is a local path handoff only.
+
+Release-candidate install/default-uninstall smoke:
+
+  .\smoke-windows-install.ps1 -Bundle .\FieldMedic-Windows.zip
+
+Optional engine paths:
+
+  .\smoke-windows-install.ps1 -Bundle .\FieldMedic-Windows.zip -DriveMedic "C:\Path\drivemedic.exe" -NetMedic "C:\Path\netmedic.exe"
+
+The smoke uses temporary program/data roots and writes only its qualification receipt into the normal FieldMedic evidence home.
