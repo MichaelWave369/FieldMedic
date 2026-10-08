@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fieldmedic.local/schema/field-medic-release-build-v1.schema.json",
+  "title": "Field Medic Release Build v1",
+  "type": "object",
+  "required": [
+    "schema", "fieldmedic_version", "channel", "source_commit",
+    "release_lock", "release_packet", "release_receipt",
+    "sha256sums", "artifacts"
+  ],
+  "properties": {
+    "schema": {"const": "field-medic-release-build-v1"},
+    "channel": {"enum": ["candidate", "stable"]}
+  },
+  "additionalProperties": true
+}
