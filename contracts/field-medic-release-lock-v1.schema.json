@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://fieldmedic.local/schema/field-medic-release-lock-v1.schema.json",
+  "title": "Field Medic Release Lock v1",
+  "type": "object",
+  "required": [
+    "schema", "fieldmedic_version", "channel", "source",
+    "engines", "promotion_gates", "windows_bundle_manifest_sha256",
+    "artifacts", "claim_boundary", "lock_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "field-medic-release-lock-v1"},
+    "channel": {"enum": ["candidate", "stable"]},
+    "lock_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "additionalProperties": true
+}
