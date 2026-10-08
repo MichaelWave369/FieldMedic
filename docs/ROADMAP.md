@@ -103,6 +103,19 @@ The Rung 5 contract/transaction suite is CI-qualified with deterministic fake mu
 - [x] license artifact text checked against declared SPDX family
 - [x] one stable-promotion candidate evaluator
 
+### RC5 gated release builder
+
+- [x] clean-worktree requirement
+- [x] exact Git commit + tree identity
+- [x] SOURCE_DATE_EPOCH from commit
+- [x] gated wheel build
+- [x] Git-derived source archive
+- [x] deterministic Windows bundle
+- [x] canonical release lock with promotion evidence hashes
+- [x] deterministic release packet
+- [x] SHA256SUMS + timestamped release-receipt sidecar
+- [x] prerelease versions forbidden from stable channel
+
 ### Stable promotion gates
 
 - [ ] run RC4 install/default-uninstall smoke on a real Windows workstation
@@ -110,4 +123,4 @@ The Rung 5 contract/transaction suite is CI-qualified with deterministic fake mu
 - [ ] DriveMedic v1 lifecycle qualification completed
 - [ ] NetMedic Windows/field promotion gates completed
 - [ ] NetMedic release licensing aligned for free public use
-- [ ] final package hashes and release receipt
+- [ ] execute RC5 release builder after all physical/external gates pass
