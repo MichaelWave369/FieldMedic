@@ -40,6 +40,7 @@ from .repair_governance import (
     save_json as save_repair_json,
 )
 from .repair_runner import RepairRunner
+from .release_builder import build_release
 from .release_receipt import build_release_receipt
 from .router import route
 from .settings import default_home, load_engine_config, write_engine_config
@@ -187,6 +188,22 @@ def main(argv=None) -> int:
         help="evaluate all stable-promotion evidence gates",
     )
     pc.add_argument("--output", default="fieldmedic-stable-promotion.json")
+
+    rb = sub.add_parser(
+        "release-build",
+        help="build a gated release artifact set from a clean Git checkout",
+    )
+    rb.add_argument(
+        "--repository-root",
+        default=".",
+        help="clean FieldMedic Git checkout used for source/package identity",
+    )
+    rb.add_argument("--output-dir", required=True)
+    rb.add_argument(
+        "--channel",
+        choices=["candidate", "stable"],
+        default="candidate",
+    )
 
     sr = sub.add_parser(
         "install-smoke-receipt",
@@ -462,6 +479,13 @@ def main(argv=None) -> int:
         result = write_promotion_candidate(_home(), output)
         if result.get("status") != "READY_FOR_STABLE_PACKAGING":
             exit_code = 3
+    elif args.cmd == "release-build":
+        result = build_release(
+            home=_home(),
+            repo_root=Path(args.repository_root).resolve(),
+            output_dir=Path(args.output_dir).resolve(),
+            channel=args.channel,
+        )
     elif args.cmd == "install-smoke-receipt":
         output = (
             Path(args.output)

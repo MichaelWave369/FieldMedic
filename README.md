@@ -1,4 +1,4 @@
-# Field Medic v0.7.0-rc4
+# Field Medic v0.7.0-rc5
 
 **Field Medic** is the orchestration layer above two independent diagnostic engines:
 
@@ -327,6 +327,32 @@ External engine evidence is copied byte-for-byte into the local qualification st
 NetMedic license promotion additionally requires a recognized open-source SPDX family, explicit redistribution permission, and imported license text consistent with that declared family.
 
 See `docs/STABLE_PROMOTION.md`.
+
+## RC5 gated release builder
+
+RC5 adds the final artifact builder but keeps it downstream of the evidence gates.
+
+~~~text
+fieldmedic release-build --repository-root . --output-dir dist/release --channel candidate
+~~~
+
+The command refuses to package anything unless the current promotion evaluator says `READY_FOR_STABLE_PACKAGING` and the Git checkout is completely clean.
+
+It builds and locks:
+
+- the wheel;
+- a Git-derived source ZIP;
+- the deterministic FieldMedic-only Windows bundle;
+- a canonical release lock;
+- a deterministic release packet;
+- SHA256SUMS;
+- a timestamped release-receipt sidecar.
+
+The release lock binds the exact Git commit/tree, component versions, qualifying gate hashes and artifact SHA-256 identities. It deliberately contains no wall-clock timestamp.
+
+The `stable` channel rejects prerelease versions such as `0.7.0rc5`. Stable packaging therefore requires a final non-prerelease version that has re-earned the current-version qualification gates.
+
+See `docs/RELEASE_BUILDER.md`.
 
 ## Free and open source
 
